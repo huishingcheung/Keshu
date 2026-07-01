@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: Inter, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      color: var(--figma-color-text);
+      background: var(--figma-color-bg);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 24px;
+    }
+
+    .intro {
+      margin: 8px 0 18px;
+      color: var(--figma-color-text-secondary);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .phase {
+      display: grid;
+      grid-template-columns: 32px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+      padding: 12px;
+      border: 1px solid var(--figma-color-border);
+      border-radius: 12px;
+      background: var(--figma-color-bg-secondary);
+    }
+
+    .number {
+      display: grid;
+      width: 32px;
+      height: 32px;
+      place-items: center;
+      border-radius: 10px;
+      color: #10245e;
+      background: #b7c7ff;
+      font-weight: 700;
+    }
+
+    .title {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .meta {
+      margin-top: 2px;
+      color: var(--figma-color-text-secondary);
+      font-size: 11px;
+      line-height: 15px;
+    }
+
+    button {
+      min-width: 68px;
+      height: 32px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 10px;
+      color: #ffffff;
+      background: #3f5fce;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button:hover { background: #3654bb; }
+    button:disabled { cursor: wait; opacity: .55; }
+
+    #status {
+      min-height: 64px;
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 12px;
+      color: var(--figma-color-text-secondary);
+      background: var(--figma-color-bg-tertiary);
+      font-size: 11px;
+      line-height: 17px;
+      white-space: pre-wrap;
+    }
+
+    .footer {
+      margin-top: 12px;
+      color: var(--figma-color-text-tertiary);
+      font-size: 10px;
+      line-height: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>JNU Smart Edu · Design Builder</h1>
+  <p class="intro">按顺序运行。每个阶段只重建带插件标记的内容，不会删除现有设计。</p>
+
+  <div class="phase">
+    <div class="number">1</div>
+    <div><div class="title">Foundations</div><div class="meta">变量、字体、圆角、颜色和说明</div></div>
+    <button data-command="foundations">运行</button>
+  </div>
+  <div class="phase">
+    <div class="number">2</div>
+    <div><div class="title">Components</div><div class="meta">按钮、导航、待办、课程块和状态标签</div></div>
+    <button data-command="components">运行</button>
+  </div>
+  <div class="phase">
+    <div class="number">3</div>
+    <div><div class="title">App Screens</div><div class="meta">首页、学分、课表、侧栏、考试、AI、任务弹窗</div></div>
+    <button data-command="screens">运行</button>
+  </div>
+  <div class="phase">
+    <div class="number">4</div>
+    <div><div class="title">Widgets & QA</div><div class="meta">待办空/列表状态、每日课程、交互与无障碍说明</div></div>
+    <button data-command="widgets">运行</button>
+  </div>
+
+  <div id="status">等待运行 Phase 1。</div>
+  <div class="footer">重跑 Components 后，请继续重跑 Screens 和 Widgets，以更新组件实例。</div>
+
+  <script>
+    const status = document.getElementById('status');
+    const buttons = Array.from(document.querySelectorAll('button[data-command]'));
+
+    function setBusy(busy) {
+      buttons.forEach(button => { button.disabled = busy; });
+    }
+
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        setBusy(true);
+        status.textContent = `正在运行 ${button.parentElement.querySelector('.title').textContent}...`;
+        parent.postMessage({ pluginMessage: { type: 'run', command: button.dataset.command } }, '*');
+      });
+    });
+
+    window.onmessage = event => {
+      const message = event.data.pluginMessage;
+      if (!message) return;
+      setBusy(false);
+      status.textContent = message.ok
+        ? `${message.title} 完成\n${message.summary}`
+        : `执行失败\n${message.error}\n\n请不要重复点击，先修正错误。`;
+    };
+  </script>
+</body>
+</html>

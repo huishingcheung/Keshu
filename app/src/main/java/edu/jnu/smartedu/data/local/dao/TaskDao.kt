@@ -18,6 +18,12 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE done = 0 ORDER BY dueAtMillis LIMIT :limit")
     suspend fun getOpenTasks(limit: Int = 3): List<TaskEntity>
 
+    @Query("SELECT COUNT(*) FROM tasks WHERE done = 0")
+    suspend fun getOpenTaskCount(): Int
+
+    @Query("SELECT * FROM tasks WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): TaskEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(task: TaskEntity)
 

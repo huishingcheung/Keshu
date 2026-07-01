@@ -67,6 +67,7 @@ import edu.jnu.smartedu.JnuSmartEduApp
 import edu.jnu.smartedu.data.parser.ImportPageType
 import edu.jnu.smartedu.data.repository.ImportSummary
 import edu.jnu.smartedu.presentation.theme.JnuSmartEduTheme
+import edu.jnu.smartedu.widget.WidgetUpdateManager
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -103,6 +104,7 @@ class ManualSyncActivity : ComponentActivity() {
                             result.fold(
                                 onSuccess = {
                                     toast(it, Toast.LENGTH_LONG)
+                                    WidgetUpdateManager.requestUpdate(this@ManualSyncActivity)
                                     finish()
                                 },
                                 onFailure = { toast("一键同步失败：${it.message}", Toast.LENGTH_LONG) },

@@ -1,4 +1,3 @@
-// Redesign: 把原本分散的教务信息重构为移动端仪表盘，使用动态高光 Header、分区卡片、底部导航和轻量玻璃质感承载学分、课表、考试与 AI 操作。
 package edu.jnu.smartedu.presentation
 
 import android.content.Intent
@@ -31,7 +30,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -50,9 +48,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.Insights
 import androidx.compose.material3.AlertDialog
@@ -86,6 +82,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -95,7 +92,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -142,7 +138,12 @@ private enum class MainTab(val title: String, val subtitle: String, val icon: Im
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun JnuSmartEduAppScreen(container: AppContainer) {
+fun JnuSmartEduAppScreen(
+    container: AppContainer,
+    launchDestination: String? = null,
+    launchAddTask: Boolean = false,
+    launchRequestId: Long = 0L,
+) {
     val context = LocalContext.current
     val academicSettings = remember { context.getSharedPreferences("academic_settings", 0) }
     var selectedTab by remember { mutableStateOf(MainTab.Home) }
@@ -163,30 +164,52 @@ fun JnuSmartEduAppScreen(container: AppContainer) {
     )
     val state by viewModel.uiState.collectAsState()
 
+    LaunchedEffect(launchRequestId) {
+        MainTab.entries.firstOrNull { it.name.equals(launchDestination, ignoreCase = true) }?.let {
+            selectedTab = it
+        }
+    }
+
     Scaffold(
         topBar = {
             if (selectedTab != MainTab.Schedule) {
                 TopAppBar(
                     modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),
                     title = {
-                        Column {
-                            Text(selectedTab.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                            Text(selectedTab.subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                modifier = Modifier.size(42.dp),
+                                shape = RoundedCornerShape(15.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        selectedTab.icon,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(21.dp),
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Column {
+                                Text(selectedTab.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                                Text(selectedTab.subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.96f)),
                 )
             }
         },
         bottomBar = {
             NavigationBar(
                 modifier = Modifier
-                    .padding(horizontal = 18.dp, vertical = 10.dp)
-                    .clip(RoundedCornerShape(28.dp))
-                    .shadow(18.dp, RoundedCornerShape(28.dp))
+                    .padding(horizontal = 14.dp, vertical = 8.dp)
+                    .clip(RoundedCornerShape(26.dp))
                     .windowInsetsPadding(WindowInsets.navigationBars),
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
-                tonalElevation = 8.dp,
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.96f),
+                tonalElevation = 0.dp,
             ) {
                 MainTab.entries.forEach { tab ->
                     NavigationBarItem(
@@ -195,9 +218,9 @@ fun JnuSmartEduAppScreen(container: AppContainer) {
                         icon = { Icon(tab.icon, contentDescription = tab.title) },
                         label = { Text(tab.title, maxLines = 1) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimary,
                             selectedTextColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            indicatorColor = MaterialTheme.colorScheme.primary,
                             unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
@@ -217,6 +240,7 @@ fun JnuSmartEduAppScreen(container: AppContainer) {
                         onUpdateTask = viewModel::updateTask,
                         onSetTaskDone = viewModel::setTaskDone,
                         onDeleteTask = viewModel::deleteTask,
+                        addTaskRequestId = if (launchAddTask) launchRequestId else 0L,
                     )
                     MainTab.Credit -> CreditPage(state)
                     MainTab.Schedule -> SchedulePage(
@@ -245,7 +269,8 @@ private fun ScreenShell(padding: PaddingValues, content: @Composable () -> Unit)
                 Brush.verticalGradient(
                     listOf(
                         MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.58f),
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f),
+                        MaterialTheme.colorScheme.background,
                     ),
                 ),
             )
@@ -264,10 +289,14 @@ private fun HomePage(
     onUpdateTask: (TaskEntity, String, Long) -> Unit,
     onSetTaskDone: (TaskEntity, Boolean) -> Unit,
     onDeleteTask: (TaskEntity) -> Unit,
+    addTaskRequestId: Long,
 ) {
     var showAddTaskDialog by remember { mutableStateOf(false) }
     var editingTask by remember { mutableStateOf<TaskEntity?>(null) }
     var deletingTask by remember { mutableStateOf<TaskEntity?>(null) }
+    LaunchedEffect(addTaskRequestId) {
+        if (addTaskRequestId != 0L) showAddTaskDialog = true
+    }
     val tree = state.creditTree
     val todayDayOfWeek = remember { LocalDate.now().dayOfWeek.value }
     val todaySessions = remember(state.schedule.classSessions, currentWeek, todayDayOfWeek) {
@@ -376,6 +405,7 @@ private fun TaskEditorDialog(
     onSave: (String, Long) -> Unit,
 ) {
     var title by remember(task?.id) { mutableStateOf(task?.title.orEmpty()) }
+    var saving by remember(task?.id) { mutableStateOf(false) }
     var dueDate by remember(task?.id) {
         mutableStateOf(
             task?.let { java.time.Instant.ofEpochMilli(it.dueAtMillis).atZone(ZoneId.systemDefault()).toLocalDate() }
@@ -389,8 +419,13 @@ private fun TaskEditorDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             Button(
-                enabled = title.isNotBlank() && (task != null || dueAtMillis > System.currentTimeMillis()),
-                onClick = { onSave(title, dueAtMillis) },
+                enabled = !saving && title.isNotBlank() && (task != null || dueAtMillis > System.currentTimeMillis()),
+                onClick = {
+                    if (!saving) {
+                        saving = true
+                        onSave(title, dueAtMillis)
+                    }
+                },
             ) { Text(if (task == null) "添加" else "保存") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
@@ -457,7 +492,10 @@ private fun CreditPage(state: DashboardUiState) {
                 action = {
                     Button(
                         onClick = { includeTakingProjection = !includeTakingProjection },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color(0xFF0F3D91)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.primary,
+                        ),
                     ) {
                         Text(if (includeTakingProjection) "恢复只看已修" else "预测本学期通过后学分")
                     }
@@ -466,7 +504,7 @@ private fun CreditPage(state: DashboardUiState) {
         }
         item { SectionHeader("学分树", "点开模块查看课程") }
         if (tree == null) {
-            item { EmptyCard("暂无学分数据", "点击右上角同步，导入成绩单和培养方案。") }
+            item { EmptyCard("暂无学分数据", "同步培养方案和详细课程后，学分进度会显示在这里。") }
         } else {
             items(tree.largeGroups, key = { it.id }) { group ->
                 LargeGroupCard(
@@ -622,7 +660,13 @@ private fun ExamPage(state: DashboardUiState, onScheduleAlarms: () -> Unit) {
                 caption = "开启提醒后将为即将到来的考试创建本地通知",
                 progress = if (state.schedule.exams.isEmpty()) 0f else 1f,
                 action = {
-                    Button(onClick = onScheduleAlarms, colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color(0xFF0F3D91))) {
+                    Button(
+                        onClick = onScheduleAlarms,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.primary,
+                        ),
+                    ) {
                         Icon(Icons.Default.NotificationsActive, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
                         Text("安排提醒")
@@ -661,9 +705,9 @@ private fun AdvisorPage(state: DashboardUiState, onRequestAdvice: (String) -> Un
         }
         item {
             ElevatedCard(
-                shape = RoundedCornerShape(28.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
             ) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(
@@ -675,7 +719,7 @@ private fun AdvisorPage(state: DashboardUiState, onRequestAdvice: (String) -> Un
                         visualTransformation = PasswordVisualTransformation(),
                     )
                     Text(
-                        "API Key 仅用于本次请求，不会保存在本地。系统会自动分析下一学期。",
+                        "API Key 仅用于本次请求，不会保存在本地。系统会综合培养方案、已修与在修课程。",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -701,11 +745,11 @@ private fun AdvisorPage(state: DashboardUiState, onRequestAdvice: (String) -> Un
         }
         val advice = state.advice
         if (advice == null) {
-            item { EmptyCard("尚未生成建议", "填写 DeepSeek API Key 后直接生成，系统会自动选择下一学期并计入在修课程。") }
+            item { EmptyCard("尚未生成建议", "填写 DeepSeek API Key 后直接生成，系统会自动计入已修与在修课程。") }
         } else {
             item { AdviceSummaryCard(advice) }
             if (advice.recommendations.isEmpty()) {
-                item { EmptyCard("暂无可推荐课程", "当前没有符合下一学期和培养方案缺口的未修课程，请检查详细课程数据。") }
+                item { EmptyCard("暂无可推荐课程", "当前没有符合培养方案缺口的未修课程，请检查详细课程数据。") }
             } else {
                 item { SectionHeader("推荐课程", "${advice.recommendations.size} 门") }
                 items(advice.recommendations, key = { "${it.courseCode}-${it.groupName}" }) { recommendation ->
@@ -768,9 +812,9 @@ private fun SemesterStartCard(
     }
     val pickerState = rememberDatePickerState(initialSelectedDateMillis = selectedMillis)
     ElevatedCard(
-        shape = RoundedCornerShape(26.dp),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = Color(0xFF1D2531)),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -828,7 +872,7 @@ private fun ScheduleTopHeader(
     onOpenDrawer: () -> Unit,
     onSelectWeek: () -> Unit,
 ) {
-    Surface(color = Color(0xFF111720)) {
+    Surface(color = Color(0xFF101620)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -836,7 +880,7 @@ private fun ScheduleTopHeader(
                 .padding(start = 10.dp, end = 18.dp, top = 14.dp, bottom = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(shape = CircleShape, color = Color(0xFF1D2531)) {
+            Surface(shape = RoundedCornerShape(15.dp), color = Color(0xFF202A3A)) {
                 IconButton(onClick = onOpenDrawer) {
                     Icon(Icons.Default.Menu, contentDescription = "打开课表侧栏", tint = Color(0xFFE7ECF3), modifier = Modifier.size(26.dp))
                 }
@@ -862,12 +906,12 @@ private fun ScheduleTopHeader(
                     color = Color(0xFF98A5B7),
                 )
             }
-            Surface(shape = RoundedCornerShape(14.dp), color = Color(0xFF1D2531)) {
+            Surface(shape = RoundedCornerShape(14.dp), color = Color(0xFF25375B)) {
                 Text(
                     "左右滑动切周",
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF98A5B7),
+                    color = Color(0xFFB7C7FF),
                 )
             }
         }
@@ -918,7 +962,7 @@ private fun ScheduleWeekGrid(
     val maxSection = sessions.maxOfOrNull { it.endSection }?.coerceAtLeast(12) ?: 12
     val weekDates = remember(semesterStartDate, selectedWeek) { scheduleWeekDates(semesterStartDate, selectedWeek) }
     val dayNames = listOf("一", "二", "三", "四", "五", "六", "日")
-    val sectionHeight = 82.dp
+    val sectionHeight = 68.dp
     val today = remember { LocalDate.now() }
     val verticalScroll = rememberScrollState()
     BoxWithConstraints(
@@ -1019,7 +1063,7 @@ private fun ScheduleDayHeader(
         Surface(
             modifier = Modifier.size(38.dp),
             shape = RoundedCornerShape(9.dp),
-            color = if (selected) Color(0xFF2762B3) else Color.Transparent,
+            color = if (selected) Color(0xFF5F78D8) else Color.Transparent,
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Text(
@@ -1057,7 +1101,7 @@ private fun ScheduleEmptySlot(
             .width(dayWidth)
             .height(sectionHeight),
         color = Color.Transparent,
-        border = BorderStroke(0.5.dp, Color(0xFF222B38)),
+        border = BorderStroke(0.5.dp, Color(0xFF2A3342)),
     ) {}
 }
 
@@ -1114,18 +1158,18 @@ private fun HeroCard(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(32.dp),
+        shape = RoundedCornerShape(28.dp),
         color = Color.Transparent,
-        shadowElevation = 10.dp,
+        shadowElevation = 0.dp,
     ) {
         Box(
             modifier = Modifier
                 .background(
                     Brush.linearGradient(
-                        listOf(Color(0xFF0B1220), Color(0xFF0F3D91), Color(0xFF16A085)),
+                        listOf(Color(0xFF151D38), Color(0xFF3656B3), Color(0xFF087B69)),
                     ),
                 )
-                .padding(22.dp),
+                .padding(20.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Text(title, style = MaterialTheme.typography.titleMedium, color = Color.White.copy(alpha = 0.82f))
@@ -1139,8 +1183,8 @@ private fun HeroCard(
                 LinearProgressIndicator(
                     progress = { progress.coerceIn(0f, 1f) },
                     modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(99.dp)),
-                    color = Color.White,
-                    trackColor = Color.White.copy(alpha = 0.24f),
+                    color = MaterialTheme.colorScheme.secondary,
+                    trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.24f),
                 )
                 Text(caption, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.78f))
                 if (action != null) action()
@@ -1153,9 +1197,9 @@ private fun HeroCard(
 private fun MetricTile(label: String, value: String, icon: ImageVector, modifier: Modifier = Modifier) {
     ElevatedCard(
         modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.56f)),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             IconBubble(icon)
@@ -1176,9 +1220,9 @@ private fun SectionHeader(title: String, subtitle: String) {
 @Composable
 private fun SyncEntryCard(onSync: () -> Unit) {
     ElevatedCard(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.52f)),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -1214,31 +1258,6 @@ private fun TodayCourseRow(session: ClassSessionEntity) {
 }
 
 @Composable
-private fun NextUpCard(state: DashboardUiState) {
-    val nextExam = state.schedule.exams.minByOrNull { it.startsAtMillis }
-    val nextTask = state.schedule.tasks.minByOrNull { it.dueAtMillis }
-    ElevatedCard(
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
-    ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            if (nextExam == null && nextTask == null) {
-                Text("今天没有紧急事项", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text("这里会显示最近的考试和手动添加的任务。", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            } else {
-                nextExam?.let {
-                    MiniInfoRow(Icons.Default.Event, it.courseName, "${it.startsAtMillis.formatDateTime()} · ${it.location}")
-                }
-                nextTask?.let {
-                    MiniInfoRow(Icons.Default.TaskAlt, it.title, "截止 ${it.dueAtMillis.formatDate()}")
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun LargeGroupCard(
     group: LargeGroupProgress,
     expanded: Boolean,
@@ -1247,9 +1266,9 @@ private fun LargeGroupCard(
     onToggleSmallGroup: (String) -> Unit,
 ) {
     ElevatedCard(
-        shape = RoundedCornerShape(26.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.48f)),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1324,7 +1343,7 @@ private fun SmallGroupTree(
                 Text(
                     if (group.met) "达标" else "差 ${group.gapCredits.formatCredit()}",
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (group.met) Color(0xFF168A4A) else MaterialTheme.colorScheme.primary,
+                    color = if (group.met) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
                 )
             }
         }
@@ -1352,9 +1371,9 @@ private fun SmallGroupTree(
 private fun ClassSessionCard(session: ClassSessionEntity, onClick: () -> Unit = {}) {
     ElevatedCard(
         modifier = Modifier.clickable(onClick = onClick),
-        shape = RoundedCornerShape(26.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.48f)),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.Top) {
@@ -1489,9 +1508,9 @@ private fun ClassSessionDetailDialog(
 @Composable
 private fun ExamCard(exam: ExamEntity) {
     ElevatedCard(
-        shape = RoundedCornerShape(26.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.48f)),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1517,7 +1536,7 @@ private fun TaskRow(
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = if (task.done) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f) else MaterialTheme.colorScheme.surface,
-        shadowElevation = 1.dp,
+        shadowElevation = 0.dp,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
@@ -1549,11 +1568,11 @@ private fun TaskRow(
 @Composable
 private fun AdviceSummaryCard(advice: CourseAdvice) {
     Surface(
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f),
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            MiniInfoRow(Icons.Default.AutoAwesome, "DeepSeek 建议", advice.targetTerm)
+            MiniInfoRow(Icons.Default.AutoAwesome, "DeepSeek 建议", "基于培养方案、已修与在修课程")
             Text(advice.summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
         }
     }
@@ -1562,9 +1581,9 @@ private fun AdviceSummaryCard(advice: CourseAdvice) {
 @Composable
 private fun RecommendationCard(recommendation: CourseRecommendation) {
     ElevatedCard(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.48f)),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.Top) {
@@ -1597,9 +1616,9 @@ private fun RecommendationCard(recommendation: CourseRecommendation) {
 private fun EmptyCard(title: String, subtitle: String) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(26.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.78f),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)),
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.42f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.24f)),
     ) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -1624,7 +1643,7 @@ private fun MiniInfoRow(icon: ImageVector, title: String, subtitle: String, modi
 private fun IconBubble(icon: ImageVector, small: Boolean = false) {
     Surface(
         modifier = Modifier.size(if (small) 36.dp else 44.dp),
-        shape = CircleShape,
+        shape = RoundedCornerShape(if (small) 12.dp else 15.dp),
         color = MaterialTheme.colorScheme.primaryContainer,
     ) {
         Box(contentAlignment = Alignment.Center) {

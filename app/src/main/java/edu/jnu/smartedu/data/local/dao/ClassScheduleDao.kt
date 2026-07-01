@@ -15,6 +15,9 @@ interface ClassScheduleDao {
     @Query("SELECT * FROM class_sessions WHERE term = :term ORDER BY dayOfWeek, startSection, courseName")
     fun observeByTerm(term: String): Flow<List<ClassSessionEntity>>
 
+    @Query("SELECT * FROM class_sessions ORDER BY term DESC, dayOfWeek, startSection, courseName")
+    suspend fun getAll(): List<ClassSessionEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(sessions: List<ClassSessionEntity>)
 

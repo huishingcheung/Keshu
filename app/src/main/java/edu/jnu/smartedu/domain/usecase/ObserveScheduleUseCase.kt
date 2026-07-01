@@ -26,7 +26,11 @@ class ObserveScheduleUseCase(
             taskDao.observeAllTasks(),
             classScheduleDao.observeAll(),
         ) { exams, tasks, classSessions ->
-            ScheduleSnapshot(exams = exams, tasks = tasks, classSessions = classSessions)
+            ScheduleSnapshot(
+                exams = exams.distinctBy { it.id },
+                tasks = tasks.distinctBy { it.id },
+                classSessions = classSessions.distinctBy { it.id },
+            )
         }
     }
 }

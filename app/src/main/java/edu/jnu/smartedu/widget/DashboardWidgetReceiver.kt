@@ -5,10 +5,12 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.view.View
 import android.widget.RemoteViews
 import edu.jnu.smartedu.JnuSmartEduApp
 import edu.jnu.smartedu.MainActivity
 import edu.jnu.smartedu.R
+import edu.jnu.smartedu.data.local.entity.TaskEntity
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -17,30 +19,39 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class DashboardWidgetReceiver : AppWidgetProvider() {
+    override fun onEnabled(context: Context) {
+        WidgetUpdateManager.scheduleDailyRefresh(context)
+        WidgetUpdateManager.requestUpdate(context)
+    }
+
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == ACTION_COMPLETE_TASK) {
+            val taskId = intent.getStringExtra(EXTRA_TASK_ID) ?: return
+            val pendingResult = goAsync()
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val container = (context.applicationContext as JnuSmartEduApp).container
+                    container.database.taskDao().getById(taskId)?.let { task ->
+                        container.addTaskUseCase.setDone(task, true)
+                    }
+                } finally {
+                    pendingResult.finish()
+                }
+            }
+            return
+        }
+        super.onReceive(context, intent)
+    }
+
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val database = (context.applicationContext as JnuSmartEduApp).container.database
-                val items = database.taskDao().getOpenTasks(2).map { it.title to it.dueAtMillis } +
-                    database.examDao().getUpcoming(limit = 2).map { it.courseName to it.startsAtMillis }
-                val body = items
-                    .sortedBy { it.second }
-                    .take(4)
-                    .joinToString("\n") { (title, time) -> "${formatTime(time)}  $title" }
-                    .ifBlank { "暂无待办与考试" }
+                val tasks = database.taskDao().getOpenTasks(3).distinctBy { it.id }
+                val openTaskCount = database.taskDao().getOpenTaskCount()
                 appWidgetIds.forEach { appWidgetId ->
-                    val pendingIntent = PendingIntent.getActivity(
-                        context,
-                        appWidgetId,
-                        Intent(context, MainActivity::class.java),
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                    )
-                    val views = RemoteViews(context.packageName, R.layout.dashboard_widget_layout).apply {
-                        setTextViewText(R.id.dashboard_widget_body, body)
-                        setOnClickPendingIntent(R.id.dashboard_widget_root, pendingIntent)
-                    }
-                    appWidgetManager.updateAppWidget(appWidgetId, views)
+                    appWidgetManager.updateAppWidget(appWidgetId, buildViews(context, appWidgetId, tasks, openTaskCount))
                 }
             } finally {
                 pendingResult.finish()
@@ -48,9 +59,66 @@ class DashboardWidgetReceiver : AppWidgetProvider() {
         }
     }
 
-    private fun formatTime(millis: Long): String {
+    private fun buildViews(context: Context, appWidgetId: Int, tasks: List<TaskEntity>, openTaskCount: Int): RemoteViews {
+        val views = RemoteViews(context.packageName, R.layout.dashboard_widget_layout)
+        val openApp = openAppIntent(context, appWidgetId, addTask = false)
+        views.setOnClickPendingIntent(R.id.task_widget_header, openApp)
+        views.setOnClickPendingIntent(R.id.task_widget_title, openApp)
+        views.setTextViewText(R.id.task_widget_count, openTaskCount.toString())
+        views.setViewVisibility(R.id.task_widget_empty, if (tasks.isEmpty()) View.VISIBLE else View.GONE)
+        views.setOnClickPendingIntent(R.id.task_widget_add, openAppIntent(context, appWidgetId, addTask = true))
+
+        val rowIds = intArrayOf(R.id.task_widget_row_1, R.id.task_widget_row_2, R.id.task_widget_row_3)
+        val checkIds = intArrayOf(R.id.task_widget_check_1, R.id.task_widget_check_2, R.id.task_widget_check_3)
+        val titleIds = intArrayOf(R.id.task_widget_item_title_1, R.id.task_widget_item_title_2, R.id.task_widget_item_title_3)
+        val dateIds = intArrayOf(R.id.task_widget_item_date_1, R.id.task_widget_item_date_2, R.id.task_widget_item_date_3)
+        rowIds.indices.forEach { index ->
+            val task = tasks.getOrNull(index)
+            views.setViewVisibility(rowIds[index], if (task == null) View.GONE else View.VISIBLE)
+            if (task != null) {
+                views.setTextViewText(titleIds[index], task.title)
+                views.setTextViewText(dateIds[index], formatDate(task.dueAtMillis))
+                views.setOnClickPendingIntent(checkIds[index], completeTaskIntent(context, appWidgetId, task))
+                views.setOnClickPendingIntent(titleIds[index], openApp)
+                views.setOnClickPendingIntent(dateIds[index], openApp)
+            }
+        }
+        return views
+    }
+
+    private fun openAppIntent(context: Context, appWidgetId: Int, addTask: Boolean): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java)
+            .putExtra(MainActivity.EXTRA_DESTINATION, MainActivity.DESTINATION_HOME)
+            .putExtra(MainActivity.EXTRA_ADD_TASK, addTask)
+            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        return PendingIntent.getActivity(
+            context,
+            appWidgetId * 10 + if (addTask) 1 else 0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
+    private fun completeTaskIntent(context: Context, appWidgetId: Int, task: TaskEntity): PendingIntent {
+        val intent = Intent(context, DashboardWidgetReceiver::class.java)
+            .setAction(ACTION_COMPLETE_TASK)
+            .putExtra(EXTRA_TASK_ID, task.id)
+        return PendingIntent.getBroadcast(
+            context,
+            "$appWidgetId-${task.id}".hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
+    private fun formatDate(millis: Long): String {
         return Instant.ofEpochMilli(millis)
             .atZone(ZoneId.systemDefault())
-            .format(DateTimeFormatter.ofPattern("MM-dd HH:mm"))
+            .format(DateTimeFormatter.ofPattern("MM月dd日截止"))
+    }
+
+    companion object {
+        private const val ACTION_COMPLETE_TASK = "edu.jnu.smartedu.widget.COMPLETE_TASK"
+        private const val EXTRA_TASK_ID = "task_id"
     }
 }

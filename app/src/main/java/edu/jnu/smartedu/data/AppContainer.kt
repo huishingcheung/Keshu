@@ -70,7 +70,7 @@ class AppContainer(context: Context) {
     val observeLocalCourseFeedbackUseCase = ObserveLocalCourseFeedbackUseCase(database.courseDao(), database.courseFeedbackStatsDao())
     val importCurrentPageUseCase = ImportCurrentPageUseCase(repository)
     val getCourseAdviceUseCase = GetCourseAdviceUseCase(advisorRepository)
-    val addTaskUseCase = AddTaskUseCase(database.taskDao(), ExamAlarmScheduler(context))
+    val addTaskUseCase = AddTaskUseCase(database.taskDao(), ExamAlarmScheduler(context), context.applicationContext)
     val scheduleExamAlarmsUseCase = ScheduleExamAlarmsUseCase(
         database.examDao(),
         ExamAlarmScheduler(context),

@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">JNU Smart Edu</string>
-    <string name="dashboard_widget_description">Open JNU Smart Edu dashboard</string>
+    <string name="dashboard_widget_description">查看并完成待办任务</string>
+    <string name="schedule_widget_description">查看今日课程与近期考试</string>
 </resources>
