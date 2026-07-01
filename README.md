@@ -5,10 +5,18 @@
 ![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?logo=kotlin&logoColor=white)
 ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)
+[![Android CI](https://github.com/huishingcheung/JNU-Smart-Edu/actions/workflows/android.yml/badge.svg)](https://github.com/huishingcheung/JNU-Smart-Edu/actions/workflows/android.yml)
+[![Download APK](https://img.shields.io/badge/Download-v0.1.0%20Preview-2563EB?logo=android&logoColor=white)](https://github.com/huishingcheung/JNU-Smart-Edu/releases/download/v0.1.0/JNU-Smart-Edu-v0.1.0-debug.apk)
 
 ## 简体中文
 
 JNU Smart Edu 是一款面向暨南大学学生的 Android 教务助手，将课表、学分进度、待办任务、考试安排和选课建议集中在一个应用中。
+
+### 下载
+
+[直接下载 v0.1.0 测试版 APK](https://github.com/huishingcheung/JNU-Smart-Edu/releases/download/v0.1.0/JNU-Smart-Edu-v0.1.0-debug.apk) · [查看所有版本](https://github.com/huishingcheung/JNU-Smart-Edu/releases)
+
+> 当前提供调试签名的预览版本，适合功能体验与测试。Android 安装时可能需要允许浏览器或文件管理器安装未知来源应用。
 
 ### 功能亮点
 
@@ -61,6 +69,12 @@ cd JNU-Smart-Edu
 ## English
 
 JNU Smart Edu is an Android academic assistant for Jinan University students. It brings schedules, credit progress, tasks, exams, and course recommendations into one app.
+
+### Download
+
+[Download the v0.1.0 preview APK](https://github.com/huishingcheung/JNU-Smart-Edu/releases/download/v0.1.0/JNU-Smart-Edu-v0.1.0-debug.apk) · [View all releases](https://github.com/huishingcheung/JNU-Smart-Edu/releases)
+
+> The current package is a debug-signed preview intended for evaluation and testing. Android may ask you to allow installations from your browser or file manager.
 
 ### Highlights
 
