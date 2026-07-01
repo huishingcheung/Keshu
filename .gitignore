@@ -1,0 +1,33 @@
+# Android and Gradle
+.gradle/
+.gradle-user-home/
+.build/
+**/build/
+.kotlin/
+local.properties
+
+# IDE
+.idea/
+*.iml
+
+# Local agent metadata
+.agents/
+.codex/
+
+# Local-only project documents
+/designed.md
+/JNU_Smart_Edu_Requirements_v2.0_Clean_Final.md
+
+# Academic-system snapshots (may contain personal data)
+/*.html
+/*_files/
+
+# JVM crash output and packaged binaries
+hs_err_pid*.log
+replay_pid*.log
+*.hprof
+*.apk
+
+# Operating system
+.DS_Store
+Thumbs.db

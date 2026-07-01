@@ -1,0 +1,49 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+    <application
+        android:name=".JnuSmartEduApp"
+        android:allowBackup="true"
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:theme="@style/Theme.JnuSmartEdu"
+        android:icon="@drawable/ic_app"
+        android:roundIcon="@drawable/ic_app"
+        android:label="JNU Smart Edu">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".presentation.sync.ManualSyncActivity" />
+
+        <receiver
+            android:name=".background.ExamAlarmReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".background.TaskAlarmReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".widget.PinWidgetResultReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".widget.DashboardWidgetReceiver"
+            android:label="JNU Dashboard"
+            android:icon="@drawable/ic_app"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/dashboard_widget_info" />
+        </receiver>
+    </application>
+</manifest>
