@@ -14,15 +14,14 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <TextView
+        <ImageView
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:background="@drawable/widget_accent_background"
-            android:gravity="center"
-            android:text="✓"
-            android:textColor="#0B1220"
-            android:textSize="17sp"
-            android:textStyle="bold" />
+            android:contentDescription="待办任务"
+            android:padding="7dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_widget_check" />
 
         <TextView
             android:id="@+id/task_widget_title"
@@ -30,6 +29,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_weight="1"
+            android:includeFontPadding="false"
             android:text="待办任务"
             android:textColor="#F4F6FF"
             android:textSize="16sp"
@@ -41,6 +41,7 @@
             android:layout_height="26dp"
             android:background="@drawable/widget_count_background"
             android:gravity="center"
+            android:includeFontPadding="false"
             android:text="0"
             android:textColor="#B8C8FF"
             android:textSize="12sp"
@@ -55,15 +56,15 @@
         android:gravity="center"
         android:orientation="vertical">
 
-        <TextView
+        <ImageView
             android:id="@+id/task_widget_add"
             android:layout_width="52dp"
             android:layout_height="52dp"
             android:background="@drawable/widget_add_background"
-            android:gravity="center"
-            android:text="+"
-            android:textColor="#0B1220"
-            android:textSize="28sp" />
+            android:contentDescription="添加待办"
+            android:padding="13dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_widget_add" />
 
         <TextView
             android:layout_width="wrap_content"

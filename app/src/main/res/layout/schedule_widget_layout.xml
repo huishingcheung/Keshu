@@ -23,6 +23,7 @@
                 android:id="@+id/schedule_widget_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:includeFontPadding="false"
                 android:text="今日课程"
                 android:textColor="#F4F6FF"
                 android:textSize="16sp"
@@ -36,15 +37,14 @@
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <TextView
+        <ImageView
             android:layout_width="34dp"
             android:layout_height="34dp"
             android:background="@drawable/widget_accent_background"
-            android:gravity="center"
-            android:text="课"
-            android:textColor="#0B1220"
-            android:textSize="13sp"
-            android:textStyle="bold" />
+            android:contentDescription="今日课程"
+            android:padding="7dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_widget_schedule" />
     </LinearLayout>
 
     <TextView
