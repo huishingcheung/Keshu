@@ -1,5 +1,7 @@
 <resources>
-    <string name="app_name">JNU Smart Edu</string>
-    <string name="dashboard_widget_description">查看并完成待办任务</string>
-    <string name="schedule_widget_description">查看今日课程与近期考试</string>
+    <string name="app_name">Keshu</string>
+    <string name="dashboard_widget_name">Keshu tasks</string>
+    <string name="schedule_widget_name">Keshu schedule</string>
+    <string name="dashboard_widget_description">View and complete tasks</string>
+    <string name="schedule_widget_description">View today’s classes and upcoming exams</string>
 </resources>

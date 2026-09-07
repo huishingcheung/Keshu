@@ -1,4 +1,5 @@
 <network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">jw.jnu.edu.cn</domain>
         <domain includeSubdomains="true">jwres.jnu.edu.cn</domain>

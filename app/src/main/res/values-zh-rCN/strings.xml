@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">课枢</string>
+    <string name="dashboard_widget_name">课枢待办</string>
+    <string name="schedule_widget_name">课枢课程</string>
+    <string name="dashboard_widget_description">查看并完成待办任务</string>
+    <string name="schedule_widget_description">查看今日课程与近期考试</string>
+</resources>

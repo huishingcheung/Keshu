@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "edu.jnu.smartedu"
+    namespace = "com.keshu.mobile"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "edu.jnu.smartedu"
+        applicationId = "com.keshu.mobile"
         minSdk = 26
         targetSdk = 35
         versionCode = 3

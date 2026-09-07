@@ -1,112 +1,86 @@
-# JNU Smart Edu
+# Keshu · 课枢
 
-[简体中文](#简体中文) | [English](#english)
+[简体中文](README.zh-CN.md)
 
-![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)
-![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?logo=kotlin&logoColor=white)
-![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)
+[![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](https://developer.android.com/about/versions/oreo)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
+[![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/compose)
 [![Android CI](https://github.com/huishingcheung/JNU-Smart-Edu/actions/workflows/android.yml/badge.svg)](https://github.com/huishingcheung/JNU-Smart-Edu/actions/workflows/android.yml)
-[![Download APK](https://img.shields.io/badge/Download-v0.2.1%20Preview-3F5FCE?logo=android&logoColor=white)](https://github.com/huishingcheung/JNU-Smart-Edu/releases/download/v0.2.1/JNU-Smart-Edu-v0.2.1-debug.apk)
 
-## 简体中文
+**Your classes, credits, tasks, and exams—organized around today.**
 
-JNU Smart Edu 是一款面向暨南大学学生的 Android 教务助手，将课表、学分进度、待办任务、考试安排和选课建议集中在一个应用中。
+Keshu is an independent, local-first Android academic companion. It turns data from supported university portals into a calmer daily view, a weekly timetable, curriculum progress, reminders, and home-screen widgets.
 
-### 下载
+The integration is designed to grow through school-specific data sources. The current preview supports the Jinan University undergraduate academic system.
 
-[直接下载 v0.2.1 测试版 APK](https://github.com/huishingcheung/JNU-Smart-Edu/releases/download/v0.2.1/JNU-Smart-Edu-v0.2.1-debug.apk) · [查看所有版本](https://github.com/huishingcheung/JNU-Smart-Edu/releases)
+> [!IMPORTANT]
+> Keshu is under active development. The source tree may be ahead of published release assets, and current builds are intended for testing rather than high-stakes academic decisions.
 
-> 当前提供调试签名的预览版本，适合功能体验与测试。Android 安装时可能需要允许浏览器或文件管理器安装未知来源应用。
+## Highlights
 
-### 功能亮点
+| | Capability | What it does |
+| --- | --- | --- |
+| 🏠 | Today | Surfaces the next class, remaining classes, open tasks, and exam status. |
+| 🎓 | Credit progress | Compares completed and in-progress credits with curriculum requirements. |
+| 📅 | Weekly timetable | Browses teaching weeks and lets you correct imported class details locally. |
+| ✅ | Tasks | Creates local tasks with optional notification reminders. |
+| 📝 | Exams | Shows time, venue, seat, and reminders when the portal makes them available. |
+| ✨ | Course advisor | Generates optional course-planning suggestions from the academic context you choose to send. |
+| 🧩 | Widgets | Keeps today's classes, exam availability, and tasks on the home screen. |
 
-- **一键同步**：登录教务系统后，同步培养方案、课程、课表和考试安排
-- **周课表**：完整展示一周课程，支持上下浏览、左右切换周数和学期管理
-- **准确排课**：优先识别课程说明中的特殊见面课周次与周末上课时间
-- **学分进度**：按培养方案课群展示要求学分、已修学分和在修学分
-- **任务与考试**：待办任务支持添加、编辑、完成和删除，考试安排独立展示
-- **智能选课建议**：结合未完成课群、已修课程和在修课程，通过 DeepSeek 生成可读的选课建议
-- **全新界面**：采用 Material 3 深色视觉、紧凑卡片和统一的 Indigo/Mint 配色
-- **桌面小组件**：直接完成待办任务，或查看每日课程与最近考试
+When the university has not opened exam viewing, Keshu shows the published viewing window instead of reporting zero exams or treating the import as a total failure.
 
-### 快速开始
+## Supported data sources
 
-1. 构建并安装应用（Android 8.0 或更高版本）。
-2. 在同步页面登录学校教务系统。
-3. 点击“一键同步”，等待应用自动导入教务数据并返回首页。
-4. 如需智能选课建议，在 AI 页面填写自己的 DeepSeek API Key 后点击“生成建议”。
+| Data source | Curriculum | Courses | Timetable | Exams | Status |
+| --- | :---: | :---: | :---: | :---: | --- |
+| Jinan University undergraduate system | ✓ | ✓ | ✓ | ✓ | Experimental |
 
-### 技术栈
+School names describe compatibility only. Keshu itself is school-neutral and is not an official university application.
 
-- Kotlin
-- Jetpack Compose + Material 3
-- Room
-- Retrofit + OkHttp + Moshi
-- WorkManager
-- Android App Widgets（RemoteViews）
+## Privacy by design
 
-### 从源码构建
+- Portal sign-in happens inside the university's own web page. Keshu does not store the portal password.
+- Imported academic records, tasks, and settings stay in the app's local storage.
+- Academic data, preferences, and portal state are excluded from Android backup and device transfer.
+- The sync screen can clear portal cookies, WebView storage, and cache at any time.
+- Notification permission is requested only after you enable a task reminder or schedule exam reminders.
+- Course advice runs only when requested. The relevant curriculum and course context is then sent to DeepSeek, while the supplied API key is not saved.
 
-需要 JDK 17、Android SDK 35 和 Android Studio。项目包含 Gradle Wrapper，无需单独安装 Gradle。
+Never post unredacted portal screenshots or logs. They may contain names, student numbers, cookies, tokens, or authenticated links.
 
-```powershell
-git clone https://github.com/huishingcheung/JNU-Smart-Edu.git
-cd JNU-Smart-Edu
-.\gradlew.bat assembleDebug
-```
+## Getting started
 
-生成的调试 APK 位于：
+1. Build and install Keshu on a device or emulator running Android 8.0 or later.
+2. Open **Sync** and review the data-access notice.
+3. Sign in on the supported university's official portal page.
+4. Choose **One-tap sync** and keep the sync screen open until each dataset reports its result.
+5. Check the imported timetable and set the semester start date when necessary.
 
-```text
-.build/app/outputs/apk/debug/app-debug.apk
-```
+The university controls when particular records are visible. Always verify important deadlines, rooms, and exam arrangements through an official channel.
 
-### 声明
+## Build and run
 
-本项目是非官方学生项目，与暨南大学官方无隶属或授权关系。教务系统页面结构变化可能影响数据导入功能。
+### Requirements
 
----
+- Android Studio
+- JDK 17, or a compatible Android Studio embedded JDK
+- Android SDK Platform 35
+- Internet access for the first Gradle sync
 
-## English
+### Android Studio
 
-JNU Smart Edu is an Android academic assistant for Jinan University students. It brings schedules, credit progress, tasks, exams, and course recommendations into one app.
+1. Clone this repository.
+2. Open the repository root in Android Studio.
+3. Install Android SDK Platform 35 from **SDK Manager** if prompted.
+4. In **Settings → Build, Execution, Deployment → Build Tools → Gradle**, select `GRADLE_LOCAL_JAVA_HOME` or a compatible embedded JDK.
+5. Wait for Gradle sync to finish.
+6. Select the `app` run configuration and create or select an Android emulator.
+7. Choose **Run**.
 
-### Download
+No physical phone is required. An Android Virtual Device running API 35 is suitable for development and UI testing.
 
-[Download the v0.2.1 preview APK](https://github.com/huishingcheung/JNU-Smart-Edu/releases/download/v0.2.1/JNU-Smart-Edu-v0.2.1-debug.apk) · [View all releases](https://github.com/huishingcheung/JNU-Smart-Edu/releases)
-
-> The current package is a debug-signed preview intended for evaluation and testing. Android may ask you to allow installations from your browser or file manager.
-
-### Highlights
-
-- **One-tap sync**: Sign in to the academic portal and import curriculum, courses, schedules, and exams
-- **Weekly timetable**: View the full week, scroll vertically, swipe between weeks, and manage semesters
-- **Accurate scheduling**: Prioritize special meeting weeks and weekend sessions described in course notes
-- **Credit progress**: Track required, completed, and in-progress credits by curriculum group
-- **Tasks and exams**: Add, edit, complete, and delete tasks while keeping exam arrangements separate
-- **Smart course advice**: Use DeepSeek to generate readable recommendations based on unmet groups and completed or in-progress courses
-- **Redesigned interface**: Material 3 dark surfaces, compact cards, and a consistent Indigo/Mint palette
-- **Home-screen widgets**: Complete tasks directly or check today's classes and the nearest exam
-
-### Getting Started
-
-1. Build and install the app on Android 8.0 or later.
-2. Sign in to the university academic portal from the sync page.
-3. Tap **One-tap Sync** and wait for the app to import the data and return to the home screen.
-4. For AI-assisted course recommendations, enter your own DeepSeek API key on the AI page and tap **Generate Advice**.
-
-### Tech Stack
-
-- Kotlin
-- Jetpack Compose + Material 3
-- Room
-- Retrofit + OkHttp + Moshi
-- WorkManager
-- Android App Widgets (RemoteViews)
-
-### Build from Source
-
-Install JDK 17, Android SDK 35, and Android Studio. The Gradle Wrapper is included, so a separate Gradle installation is not required.
+The current checkout includes `gradlew.bat` but not the Unix `gradlew` launcher. On Windows, command-line builds are available with:
 
 ```powershell
 git clone https://github.com/huishingcheung/JNU-Smart-Edu.git
@@ -114,12 +88,91 @@ cd JNU-Smart-Edu
 .\gradlew.bat assembleDebug
 ```
 
-The debug APK is generated at:
+The generated APK is located at:
 
 ```text
 .build/app/outputs/apk/debug/app-debug.apk
 ```
 
-### Disclaimer
+The application ID is `com.keshu.mobile`.
 
-This is an unofficial student project and is not affiliated with or endorsed by Jinan University. Changes to the university portal may affect data import functionality.
+## Architecture
+
+Keshu uses Room as the local source of truth. Portal access is intentionally isolated from normal app use: an authenticated WebView imports selected records, then the Compose UI and widgets read from local storage.
+
+```mermaid
+flowchart LR
+    Portal[University portal<br/>Authenticated WebView] --> Parser[Portal parser]
+    Parser --> Repository[Repositories and use cases]
+    Repository --> Room[(Room database)]
+    Room --> ViewModel[ViewModels]
+    ViewModel --> UI[Compose UI]
+    Room --> Widgets[RemoteViews widgets]
+    UI -. user-requested context .-> Advisor[DeepSeek course advice]
+```
+
+```text
+app/src/main/java/com/keshu/mobile/
+├── data/           Room, portal parsing, repositories, and network clients
+├── domain/         Models and use cases
+├── presentation/   Compose screens, theme, and sync workflow
+├── background/     Task and exam reminders
+└── widget/         Home-screen widgets and refresh work
+```
+
+### Technology
+
+- Kotlin and Coroutines
+- Jetpack Compose with Material 3
+- Room
+- Retrofit, OkHttp, Moshi, and jsoup
+- WorkManager and Android alarms
+- Android App Widgets with RemoteViews
+- WebView-based portal integration
+
+## Quality checks
+
+The repository's GitHub Actions workflow builds the debug APK on pushes and pull requests targeting `main`. On Windows, the same build and static analysis can be run with:
+
+```powershell
+.\gradlew.bat assembleDebug
+.\gradlew.bat lintDebug
+```
+
+Focused tests that do not depend on private portal captures can be run with:
+
+```powershell
+.\gradlew.bat testDebugUnitTest `
+  --tests "com.keshu.mobile.domain.*" `
+  --tests "com.keshu.mobile.data.repository.*" `
+  --tests "com.keshu.mobile.presentation.sync.*" `
+  --tests "com.keshu.mobile.widget.*"
+```
+
+Some legacy parser tests reference private HTML fixtures that are intentionally absent from the repository. Replacing them with sanitized, synthetic fixtures is tracked as project work.
+
+## Current limitations
+
+- Only the Jinan University undergraduate academic system is currently supported.
+- Portal markup and session behavior can change without notice and may temporarily break imports.
+- Exam arrangements cannot be imported outside the viewing period set by the university.
+- Published builds are preview builds and are not distributed through an app store.
+- macOS and Linux command-line builds need the missing Unix Gradle wrapper launcher to be restored.
+
+## Roadmap
+
+- Make portal imports faster and independently recoverable for each dataset.
+- Add sanitized parser fixtures and reproducible clean-clone tests.
+- Split the main Compose surface into smaller feature modules.
+- Define a stable adapter contract for additional university systems.
+- Prepare release signing and distribution only after the core sync path is stable.
+
+## Feedback and contributions
+
+Use [GitHub Issues](https://github.com/huishingcheung/JNU-Smart-Edu/issues) for reproducible bugs and focused feature requests. Before attaching portal-related material, remove all personal and authentication data.
+
+The repository does not yet contain a contribution guide or an open-source license. Until those policies are added, please use Issues to discuss a proposed change before investing substantial work.
+
+## Disclaimer
+
+Keshu is an independent student project. It is not affiliated with, authorized by, or endorsed by Jinan University or any other university. School names identify compatible data sources only. Users remain responsible for verifying academic information against official university systems.

@@ -1,17 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
-        android:name=".JnuSmartEduApp"
-        android:allowBackup="true"
-        android:usesCleartextTraffic="true"
+        android:name=".KeshuApp"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:usesCleartextTraffic="false"
         android:networkSecurityConfig="@xml/network_security_config"
-        android:theme="@style/Theme.JnuSmartEdu"
-        android:icon="@drawable/ic_app"
-        android:roundIcon="@drawable/ic_app"
-        android:label="JNU Smart Edu">
+        android:theme="@style/Theme.Keshu"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:label="@string/app_name">
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -35,8 +36,8 @@
 
         <receiver
             android:name=".widget.DashboardWidgetReceiver"
-            android:label="JNU 待办任务"
-            android:icon="@drawable/ic_app"
+            android:label="@string/dashboard_widget_name"
+            android:icon="@mipmap/ic_launcher"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -48,8 +49,8 @@
 
         <receiver
             android:name=".widget.ScheduleWidgetReceiver"
-            android:label="JNU 今日课程"
-            android:icon="@drawable/ic_app"
+            android:label="@string/schedule_widget_name"
+            android:icon="@mipmap/ic_launcher"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

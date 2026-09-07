@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="14dp">
 
     <LinearLayout
         android:id="@+id/schedule_widget_header"
@@ -25,7 +25,7 @@
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
                 android:text="今日课程"
-                android:textColor="#F4F6FF"
+                android:textColor="#10213F"
                 android:textSize="16sp"
                 android:textStyle="bold" />
             <TextView
@@ -33,7 +33,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="7月1日 星期三"
-                android:textColor="#AAB6CE"
+                android:textColor="#5A667A"
                 android:textSize="11sp" />
         </LinearLayout>
 
@@ -54,20 +54,20 @@
         android:layout_weight="1"
         android:gravity="center"
         android:text="今天没有课程，留点时间给自己"
-        android:textColor="#AAB6CE"
+        android:textColor="#5A667A"
         android:textSize="13sp" />
 
-    <LinearLayout android:id="@+id/schedule_widget_course_1" style="@style/WidgetCourseRow">
+    <LinearLayout android:id="@+id/schedule_widget_course_1" style="@style/WidgetCourseRow" android:visibility="gone">
         <TextView android:id="@+id/schedule_widget_course_time_1" style="@style/WidgetCourseTime" />
         <TextView android:id="@+id/schedule_widget_course_title_1" style="@style/WidgetCourseTitle" />
         <TextView android:id="@+id/schedule_widget_course_room_1" style="@style/WidgetCourseRoom" />
     </LinearLayout>
-    <LinearLayout android:id="@+id/schedule_widget_course_2" style="@style/WidgetCourseRow">
+    <LinearLayout android:id="@+id/schedule_widget_course_2" style="@style/WidgetCourseRow" android:visibility="gone">
         <TextView android:id="@+id/schedule_widget_course_time_2" style="@style/WidgetCourseTime" />
         <TextView android:id="@+id/schedule_widget_course_title_2" style="@style/WidgetCourseTitle" />
         <TextView android:id="@+id/schedule_widget_course_room_2" style="@style/WidgetCourseRoom" />
     </LinearLayout>
-    <LinearLayout android:id="@+id/schedule_widget_course_3" style="@style/WidgetCourseRow">
+    <LinearLayout android:id="@+id/schedule_widget_course_3" style="@style/WidgetCourseRow" android:visibility="gone">
         <TextView android:id="@+id/schedule_widget_course_time_3" style="@style/WidgetCourseTime" />
         <TextView android:id="@+id/schedule_widget_course_title_3" style="@style/WidgetCourseTitle" />
         <TextView android:id="@+id/schedule_widget_course_room_3" style="@style/WidgetCourseRoom" />
@@ -76,37 +76,46 @@
     <LinearLayout
         android:id="@+id/schedule_widget_exam"
         android:layout_width="match_parent"
-        android:layout_height="44dp"
+        android:layout_height="52dp"
         android:layout_marginTop="8dp"
         android:background="@drawable/widget_exam_background"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingHorizontal="12dp">
+        android:paddingHorizontal="12dp"
+        android:visibility="gone">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="考试"
-            android:textColor="#FDBA74"
+            android:textColor="#C7650A"
             android:textSize="11sp"
             android:textStyle="bold" />
-        <TextView
-            android:id="@+id/schedule_widget_exam_title"
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_marginStart="10dp"
             android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="#F4F6FF"
-            android:textSize="12sp"
-            android:textStyle="bold" />
-        <TextView
-            android:id="@+id/schedule_widget_exam_meta"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="#AAB6CE"
-            android:textSize="10sp" />
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/schedule_widget_exam_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#10213F"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/schedule_widget_exam_meta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#5A667A"
+                android:textSize="10sp" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

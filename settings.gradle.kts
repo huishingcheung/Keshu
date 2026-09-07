@@ -14,7 +14,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "JNU Smart Edu"
+rootProject.name = "Keshu"
 include(":app")
 
 gradle.beforeProject {
