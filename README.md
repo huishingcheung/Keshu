@@ -5,7 +5,7 @@
 [![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](https://developer.android.com/about/versions/oreo)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/compose)
-[![Android CI](https://github.com/huishingcheung/JNU-Smart-Edu/actions/workflows/android.yml/badge.svg)](https://github.com/huishingcheung/JNU-Smart-Edu/actions/workflows/android.yml)
+[![Android CI](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml/badge.svg)](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml)
 
 **Your classes, credits, tasks, and exams—organized around today.**
 
@@ -83,8 +83,8 @@ No physical phone is required. An Android Virtual Device running API 35 is suita
 The current checkout includes `gradlew.bat` but not the Unix `gradlew` launcher. On Windows, command-line builds are available with:
 
 ```powershell
-git clone https://github.com/huishingcheung/JNU-Smart-Edu.git
-cd JNU-Smart-Edu
+git clone https://github.com/huishingcheung/Keshu.git
+cd Keshu
 .\gradlew.bat assembleDebug
 ```
 
@@ -169,7 +169,7 @@ Some legacy parser tests reference private HTML fixtures that are intentionally 
 
 ## Feedback and contributions
 
-Use [GitHub Issues](https://github.com/huishingcheung/JNU-Smart-Edu/issues) for reproducible bugs and focused feature requests. Before attaching portal-related material, remove all personal and authentication data.
+Use [GitHub Issues](https://github.com/huishingcheung/Keshu/issues) for reproducible bugs and focused feature requests. Before attaching portal-related material, remove all personal and authentication data.
 
 The repository does not yet contain a contribution guide or an open-source license. Until those policies are added, please use Issues to discuss a proposed change before investing substantial work.
 

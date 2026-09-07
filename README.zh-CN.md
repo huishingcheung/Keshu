@@ -5,7 +5,7 @@
 [![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](https://developer.android.com/about/versions/oreo)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/compose)
-[![Android CI](https://github.com/huishingcheung/JNU-Smart-Edu/actions/workflows/android.yml/badge.svg)](https://github.com/huishingcheung/JNU-Smart-Edu/actions/workflows/android.yml)
+[![Android CI](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml/badge.svg)](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml)
 
 **围绕今天，整理好课程、学分、待办与考试。**
 
@@ -83,8 +83,8 @@
 当前仓库包含 `gradlew.bat`，但缺少 Unix 平台的 `gradlew` 启动脚本。在 Windows 上可使用命令行构建：
 
 ```powershell
-git clone https://github.com/huishingcheung/JNU-Smart-Edu.git
-cd JNU-Smart-Edu
+git clone https://github.com/huishingcheung/Keshu.git
+cd Keshu
 .\gradlew.bat assembleDebug
 ```
 
@@ -169,7 +169,7 @@ app/src/main/java/com/keshu/mobile/
 
 ## 反馈与贡献
 
-如需提交可复现的问题或明确的功能建议，请使用 [GitHub Issues](https://github.com/huishingcheung/JNU-Smart-Edu/issues)。上传教务相关材料前，请移除全部个人信息和认证数据。
+如需提交可复现的问题或明确的功能建议，请使用 [GitHub Issues](https://github.com/huishingcheung/Keshu/issues)。上传教务相关材料前，请移除全部个人信息和认证数据。
 
 仓库目前还没有贡献指南或开源许可证。在相关规则补充之前，如准备投入较多工作，请先通过 Issue 讨论修改方向。
 
