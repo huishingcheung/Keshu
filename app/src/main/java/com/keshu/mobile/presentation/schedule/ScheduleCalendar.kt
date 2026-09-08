@@ -53,6 +53,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -254,12 +256,13 @@ internal fun ScheduleWeekGrid(
     semesterStartDate: String,
     onSessionClick: (ClassSessionEntity) -> Unit,
 ) {
-    val maxSection = sessions.maxOfOrNull { it.endSection }?.coerceAtLeast(12) ?: 12
+    val maxSection = remember(sessions) { sessions.maxOfOrNull { it.endSection }?.coerceAtLeast(12) ?: 12 }
     val weekDates = remember(semesterStartDate, selectedWeek) { scheduleWeekDates(semesterStartDate, selectedWeek) }
-    val dayNames = listOf("一", "二", "三", "四", "五", "六", "日")
+    val sessionsByDay = remember(sessions) { sessions.groupBy { it.dayOfWeek } }
     val sectionHeight = 68.dp
     val today = remember { LocalDate.now() }
     val verticalScroll = rememberScrollState()
+    val gridColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.72f)
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
@@ -286,7 +289,7 @@ internal fun ScheduleWeekGrid(
                     )
                     Text("月", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                dayNames.forEachIndexed { index, name ->
+                scheduleDayNames.forEachIndexed { index, name ->
                     val date = weekDates.getOrNull(index)
                     ScheduleDayHeader(
                         dayName = name,
@@ -309,14 +312,28 @@ internal fun ScheduleWeekGrid(
                             ScheduleTimeCell(section, sectionHeight)
                         }
                     }
-                    Row(Modifier.padding(start = timeWidth)) {
-                        dayNames.indices.forEach { dayIndex ->
-                            Box(Modifier.width(dayWidth).requiredHeight(sectionHeight * maxSection)) {
-                                (1..maxSection).forEach { section ->
-                                    ScheduleEmptySlot(sectionHeight, dayWidth, section)
+                    Row(
+                        Modifier
+                            .padding(start = timeWidth)
+                            .requiredHeight(sectionHeight * maxSection)
+                            .drawBehind {
+                                val sectionHeightPx = sectionHeight.toPx()
+                                val dayWidthPx = dayWidth.toPx()
+                                val strokeWidth = 0.5.dp.toPx()
+                                repeat(maxSection + 1) { section ->
+                                    val y = sectionHeightPx * section
+                                    drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth)
                                 }
-                                sessions
-                                    .filter { it.dayOfWeek == dayIndex + 1 }
+                                repeat(8) { day ->
+                                    val x = (dayWidthPx * day).coerceAtMost(size.width)
+                                    drawLine(gridColor, Offset(x, 0f), Offset(x, size.height), strokeWidth)
+                                }
+                            },
+                    ) {
+                        scheduleDayNames.indices.forEach { dayIndex ->
+                            Box(Modifier.width(dayWidth).requiredHeight(sectionHeight * maxSection)) {
+                                sessionsByDay[dayIndex + 1]
+                                    .orEmpty()
                                     .forEach { session ->
                                         ScheduleSessionBlock(
                                             session = session,
@@ -333,6 +350,8 @@ internal fun ScheduleWeekGrid(
         }
     }
 }
+
+private val scheduleDayNames = listOf("一", "二", "三", "四", "五", "六", "日")
 
 @Composable
 internal fun ScheduleDayHeader(
@@ -384,22 +403,6 @@ internal fun ScheduleTimeCell(section: Int, sectionHeight: androidx.compose.ui.u
             }
         }
     }
-}
-
-@Composable
-internal fun ScheduleEmptySlot(
-    sectionHeight: androidx.compose.ui.unit.Dp,
-    dayWidth: androidx.compose.ui.unit.Dp,
-    section: Int,
-) {
-    Surface(
-        modifier = Modifier
-            .offset(y = sectionHeight * (section - 1))
-            .width(dayWidth)
-            .height(sectionHeight),
-        color = Color.Transparent,
-        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.72f)),
-    ) {}
 }
 
 @Composable

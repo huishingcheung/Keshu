@@ -309,6 +309,9 @@ internal fun SmallGroupTree(
                 )
         }
         if (expanded) {
+            val sortedCourses = remember(group.courses) {
+                group.courses.sortedWith(compareBy<CourseEntity> { it.status.sortOrder() }.thenBy { it.name })
+            }
             group.childGroups.forEach { child ->
                 SmallGroupTree(
                     group = child,
@@ -316,9 +319,7 @@ internal fun SmallGroupTree(
                     onToggle = onToggle,
                 )
             }
-            group.courses
-                .sortedWith(compareBy<CourseEntity> { it.status.sortOrder() }.thenBy { it.name })
-                .forEach { course ->
+            sortedCourses.forEach { course ->
                     CourseStatusRow(
                         course = course,
                         modifier = Modifier.padding(start = 18.dp),

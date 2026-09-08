@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -40,6 +41,7 @@ internal fun ExamPage(
     examAvailability: ExamAvailability?,
     onScheduleAlarms: () -> Unit,
 ) {
+    val sortedExams = remember(state.schedule.exams) { state.schedule.exams.sortedBy { it.startsAtMillis } }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 116.dp),
@@ -61,7 +63,7 @@ internal fun ExamPage(
                 )
             }
             item { SectionHeader("考试列表", "时间、地点与座位") }
-            items(state.schedule.exams.sortedBy { it.startsAtMillis }, key = { it.id }) { exam ->
+            items(sortedExams, key = { it.id }) { exam ->
                 ExamCard(exam)
             }
         }

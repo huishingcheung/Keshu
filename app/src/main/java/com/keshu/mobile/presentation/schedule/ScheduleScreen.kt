@@ -57,13 +57,13 @@ internal fun SchedulePage(
         state.schedule.classSessions.map { it.term }.distinct().sortedDescending()
     }
     val activeTerm = selectedTerm?.takeIf { it in terms } ?: terms.firstOrNull()
-    val termSessions = state.schedule.classSessions
-        .filter { activeTerm == null || it.term == activeTerm }
-        .sortedWith(compareBy<ClassSessionEntity> { it.dayOfWeek }.thenBy { it.startSection })
-    val weekOptions = remember(termSessions, currentWeek) {
-        val maxWeek = termSessions.flatMap { it.weekNumbers() }.maxOrNull()?.coerceAtLeast(20) ?: 20
-        (1..maxWeek.coerceAtLeast(currentWeek ?: 1)).toList()
+    val termSessions = remember(state.schedule.classSessions, activeTerm) {
+        state.schedule.classSessions
+            .filter { activeTerm == null || it.term == activeTerm }
+            .sortedWith(compareBy<ClassSessionEntity> { it.dayOfWeek }.thenBy { it.startSection })
     }
+    val weekIndex = remember(termSessions, currentWeek) { buildScheduleWeekIndex(termSessions, currentWeek) }
+    val weekOptions = weekIndex.weeks
     val activeWeek = selectedWeek?.takeIf { it in weekOptions } ?: currentWeek?.takeIf { it in weekOptions } ?: weekOptions.firstOrNull()
     val pagerState = rememberPagerState(
         initialPage = weekOptions.indexOf(activeWeek).coerceAtLeast(0),
@@ -173,7 +173,7 @@ internal fun SchedulePage(
                     val week = weekOptions[page]
                     ScheduleWeekGrid(
                         modifier = Modifier.fillMaxSize(),
-                        sessions = termSessions.filter { it.occursInWeek(week) },
+                        sessions = weekIndex.sessionsByWeek[week].orEmpty(),
                         selectedWeek = week,
                         semesterStartDate = semesterStartDate,
                         onSessionClick = { selectedSession = it },
@@ -203,4 +203,30 @@ internal fun SchedulePage(
             },
         )
     }
+}
+
+internal data class ScheduleWeekIndex(
+    val weeks: List<Int>,
+    val sessionsByWeek: Map<Int, List<ClassSessionEntity>>,
+)
+
+internal fun buildScheduleWeekIndex(
+    sessions: List<ClassSessionEntity>,
+    currentWeek: Int?,
+): ScheduleWeekIndex {
+    val parsedSessions = sessions.map { it to it.weekNumbers() }
+    val maxWeek = maxOf(
+        20,
+        currentWeek ?: 1,
+        parsedSessions.maxOfOrNull { (_, weeks) -> weeks.maxOrNull() ?: 1 } ?: 1,
+    )
+    val weeks = (1..maxWeek).toList()
+    val buckets = weeks.associateWith { mutableListOf<ClassSessionEntity>() }
+    parsedSessions.forEach { (session, sessionWeeks) ->
+        sessionWeeks.forEach { week -> buckets[week]?.add(session) }
+    }
+    return ScheduleWeekIndex(
+        weeks = weeks,
+        sessionsByWeek = buckets.mapValues { (_, value) -> value.toList() },
+    )
 }

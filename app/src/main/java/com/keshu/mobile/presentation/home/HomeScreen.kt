@@ -98,6 +98,7 @@ internal fun HomePage(
     val laterSessions = remember(todaySessions, nextSession) {
         todaySessions.filterNot { it.id == nextSession?.id }
     }
+    val pendingTaskCount = remember(state.schedule.tasks) { state.schedule.tasks.count { !it.done } }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 116.dp),
@@ -129,7 +130,7 @@ internal fun HomePage(
                     Column(Modifier.weight(1f)) {
                         Text("待办任务", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Text(
-                            "${state.schedule.tasks.count { !it.done }} 项待完成",
+                            "$pendingTaskCount 项待完成",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
