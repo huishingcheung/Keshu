@@ -6,6 +6,7 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/compose)
 [![Android CI](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml/badge.svg)](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml)
+[![下载](https://img.shields.io/badge/下载-v0.3.0%20预览版-155EEF?logo=android&logoColor=white)](https://github.com/huishingcheung/Keshu/releases/download/v0.3.0/Keshu-v0.3.0-preview.apk)
 
 **围绕今天，整理好课程、学分、待办与考试。**
 
@@ -15,6 +16,12 @@
 
 > [!IMPORTANT]
 > 课枢仍在持续开发。源码可能领先于已发布的安装包，当前构建仅适合测试，不应作为重要教务决定的唯一依据。
+
+## 下载
+
+[下载课枢 v0.3.0 预览版](https://github.com/huishingcheung/Keshu/releases/download/v0.3.0/Keshu-v0.3.0-preview.apk) · [查看全部版本](https://github.com/huishingcheung/Keshu/releases)
+
+预览版 APK 使用调试签名，仅供体验与测试。课枢采用新的应用 ID `com.keshu.mobile`，因此会与早期 JNU Smart Edu 版本分别安装，也不会迁移旧版本的本地数据。
 
 ## 功能亮点
 
