@@ -1,6 +1,6 @@
 # Keshu · 课枢
 
-[简体中文](README.zh-CN.md)
+[Website](https://huishingcheung.github.io/Keshu/) · [简体中文](README.zh-CN.md)
 
 [![Android CI](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml/badge.svg)](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml)
 [![License: GPL-3.0-only](https://img.shields.io/badge/License-GPL--3.0--only-blue.svg)](LICENSE)
