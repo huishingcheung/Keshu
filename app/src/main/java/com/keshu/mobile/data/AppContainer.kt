@@ -9,13 +9,14 @@ import com.keshu.mobile.data.local.KeshuDatabase
 import com.keshu.mobile.data.local.ExamAvailabilityPreferences
 import com.keshu.mobile.data.network.DeepSeekApi
 import com.keshu.mobile.data.network.DeepSeekClient
-import com.keshu.mobile.data.parser.AcademicHtmlParser
+import com.keshu.mobile.data.portal.JnuDataSourceFactory
 import com.keshu.mobile.data.repository.AcademicRepository
 import com.keshu.mobile.data.repository.AdvisorRepository
+import com.keshu.mobile.data.source.AcademicDataSourceRegistry
 import com.keshu.mobile.domain.usecase.BuildCreditTreeUseCase
 import com.keshu.mobile.domain.usecase.AddTaskUseCase
 import com.keshu.mobile.domain.usecase.GetCourseAdviceUseCase
-import com.keshu.mobile.domain.usecase.ImportCurrentPageUseCase
+import com.keshu.mobile.domain.usecase.ImportAcademicDataUseCase
 import com.keshu.mobile.domain.usecase.ObserveLocalCourseFeedbackUseCase
 import com.keshu.mobile.domain.usecase.ObserveCreditSummaryUseCase
 import com.keshu.mobile.domain.usecase.ObserveScheduleUseCase
@@ -59,7 +60,6 @@ class AppContainer(context: Context) {
         database.examDao(),
         database.taskDao(),
         database.transcriptCourseDao(),
-        AcademicHtmlParser(),
     )
     private val deepSeekClient = DeepSeekClient(deepSeekApi)
     private val advisorRepository = AdvisorRepository(
@@ -74,7 +74,11 @@ class AppContainer(context: Context) {
     val observeCreditSummaryUseCase = ObserveCreditSummaryUseCase(database.courseDao(), database.classScheduleDao())
     val classScheduleDao = database.classScheduleDao()
     val observeLocalCourseFeedbackUseCase = ObserveLocalCourseFeedbackUseCase(database.courseDao(), database.courseFeedbackStatsDao())
-    val importCurrentPageUseCase = ImportCurrentPageUseCase(repository)
+    val academicDataSourceRegistry = AcademicDataSourceRegistry(
+        factories = listOf(JnuDataSourceFactory()),
+        defaultSourceId = "jnu-undergraduate",
+    )
+    val importAcademicDataUseCase = ImportAcademicDataUseCase(repository)
     val getCourseAdviceUseCase = GetCourseAdviceUseCase(advisorRepository)
     val addTaskUseCase = AddTaskUseCase(database.taskDao(), ExamAlarmScheduler(context), context.applicationContext)
     val scheduleExamAlarmsUseCase = ScheduleExamAlarmsUseCase(

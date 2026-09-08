@@ -16,7 +16,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-enum class ImportPageType { CURRICULUM_GROUPS, CURRICULUM_COURSES, ALL_CURRICULUM_COURSES, TRANSCRIPT, EXAMS, SCHEDULE }
+enum class JnuPageType { CURRICULUM_GROUPS, CURRICULUM_COURSES, ALL_CURRICULUM_COURSES, TRANSCRIPT, EXAMS, SCHEDULE }
 
 data class ParsedAcademicPage(
     val academicProgress: AcademicProgressEntity? = null,
@@ -27,15 +27,15 @@ data class ParsedAcademicPage(
     val classSessions: List<ClassSessionEntity> = emptyList(),
 )
 
-class AcademicHtmlParser {
-    fun parse(html: String, pageType: ImportPageType): ParsedAcademicPage {
+class JnuAcademicParser {
+    fun parse(html: String, pageType: JnuPageType): ParsedAcademicPage {
         return when (pageType) {
-            ImportPageType.CURRICULUM_GROUPS -> parseCurriculumGroups(html)
-            ImportPageType.CURRICULUM_COURSES -> parseCurriculumCourses(html)
-            ImportPageType.ALL_CURRICULUM_COURSES -> parseAllCurriculumCourses(html)
-            ImportPageType.TRANSCRIPT -> parseTranscript(html)
-            ImportPageType.EXAMS -> parseExams(html)
-            ImportPageType.SCHEDULE -> parseSchedule(html)
+            JnuPageType.CURRICULUM_GROUPS -> parseCurriculumGroups(html)
+            JnuPageType.CURRICULUM_COURSES -> parseCurriculumCourses(html)
+            JnuPageType.ALL_CURRICULUM_COURSES -> parseAllCurriculumCourses(html)
+            JnuPageType.TRANSCRIPT -> parseTranscript(html)
+            JnuPageType.EXAMS -> parseExams(html)
+            JnuPageType.SCHEDULE -> parseSchedule(html)
         }
     }
 

@@ -6,8 +6,8 @@ import com.keshu.mobile.data.local.dao.GroupDao
 import com.keshu.mobile.data.local.dao.TaskDao
 import com.keshu.mobile.data.local.dao.TranscriptCourseDao
 import com.keshu.mobile.data.local.entity.TranscriptCourseEntity
-import com.keshu.mobile.data.parser.AcademicHtmlParser
-import com.keshu.mobile.data.parser.ImportPageType
+import com.keshu.mobile.data.source.AcademicDataset
+import com.keshu.mobile.data.source.AcademicImportData
 
 class AcademicRepository(
     private val courseDao: CourseDao,
@@ -16,24 +16,22 @@ class AcademicRepository(
     private val examDao: ExamDao,
     @Suppress("unused") private val taskDao: TaskDao,
     private val transcriptCourseDao: TranscriptCourseDao,
-    private val parser: AcademicHtmlParser,
 ) {
-    suspend fun importCurrentPage(html: String, pageType: ImportPageType): ImportSummary {
-        val parsed = parser.parse(html, pageType)
-        parsed.academicProgress?.let { groupDao.upsertAcademicProgress(it) }
-        if (parsed.largeGroups.isNotEmpty()) groupDao.upsertLargeGroups(parsed.largeGroups)
-        if (parsed.smallGroups.isNotEmpty()) groupDao.upsertSmallGroups(parsed.smallGroups)
-        if (parsed.courses.isNotEmpty()) {
-            if (pageType == ImportPageType.TRANSCRIPT) {
-                importTranscriptCourses(parsed.courses)
+    suspend fun importData(data: AcademicImportData, dataset: AcademicDataset): ImportSummary {
+        data.academicProgress?.let { groupDao.upsertAcademicProgress(it) }
+        if (data.largeGroups.isNotEmpty()) groupDao.upsertLargeGroups(data.largeGroups)
+        if (data.smallGroups.isNotEmpty()) groupDao.upsertSmallGroups(data.smallGroups)
+        if (data.courses.isNotEmpty()) {
+            if (dataset == AcademicDataset.TRANSCRIPT) {
+                importTranscriptCourses(data.courses)
             } else {
-                courseDao.upsertAll(parsed.courses)
+                courseDao.upsertAll(data.courses)
             }
         }
-        if (parsed.exams.isNotEmpty()) examDao.upsertAll(parsed.exams)
-        if (parsed.classSessions.isNotEmpty()) {
-            classScheduleDao.upsertAll(parsed.classSessions)
-            parsed.classSessions
+        if (data.exams.isNotEmpty()) examDao.upsertAll(data.exams)
+        if (data.classSessions.isNotEmpty()) {
+            classScheduleDao.upsertAll(data.classSessions)
+            data.classSessions
                 .filter { it.courseCode.isNotBlank() }
                 .distinctBy { it.courseCode }
                 .forEach { session ->
@@ -41,11 +39,11 @@ class AcademicRepository(
                 }
         }
         return ImportSummary(
-            largeGroups = parsed.largeGroups.size,
-            smallGroups = parsed.smallGroups.size,
-            courses = parsed.courses.size,
-            exams = parsed.exams.size,
-            classSessions = parsed.classSessions.size,
+            largeGroups = data.largeGroups.size,
+            smallGroups = data.smallGroups.size,
+            courses = data.courses.size,
+            exams = data.exams.size,
+            classSessions = data.classSessions.size,
         )
     }
 

@@ -4,40 +4,39 @@ import com.keshu.mobile.data.local.entity.CourseStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
-class AcademicHtmlParserTest {
-    private val parser = AcademicHtmlParser()
+class JnuAcademicParserTest {
+    private val parser = JnuAcademicParser()
 
     @Test
     fun parsesCurriculumTreeFromJmindNodes() {
-        val result = parser.parse(fixture("curriculum_groups.html"), ImportPageType.CURRICULUM_GROUPS)
+        val result = parser.parse(fixture("curriculum-tree.html"), JnuPageType.CURRICULUM_GROUPS)
 
-        assertTrue(result.largeGroups.size >= 3)
+        assertEquals(3, result.largeGroups.size)
         assertEquals(160.0, result.academicProgress?.requiredCredits ?: 0.0, 0.0)
         assertEquals(122.5, result.academicProgress?.earnedCredits ?: 0.0, 0.0)
         assertTrue(result.largeGroups.any { it.requiredCredits == 54.0 && it.earnedCredits == 53.0 })
         assertTrue(result.smallGroups.any { it.requiredCredits == 10.0 })
         assertTrue(result.smallGroups.any { it.requiredCredits == 38.5 })
-        assertTrue(result.smallGroups.size >= 25)
-        val constitution = result.smallGroups.first { it.name.contains("宪法") || it.name.contains("法律") }
+        assertEquals(6, result.smallGroups.size)
+        val constitution = result.smallGroups.first { it.name == "法律基础" }
         assertTrue(constitution.parentSmallGroupId != null)
         assertEquals(3, constitution.depth)
     }
 
     @Test
     fun parsesSelectedSmallGroupCourses() {
-        val result = parser.parse(fixture("small_group_detail_1.html"), ImportPageType.CURRICULUM_COURSES)
+        val result = parser.parse(fixture("curriculum-course-detail.html"), JnuPageType.CURRICULUM_COURSES)
 
         assertTrue(result.courses.isNotEmpty())
-        assertTrue(result.courses.any { it.code == "08060067" })
+        assertTrue(result.courses.any { it.code == "COURSE001" })
         assertTrue(result.courses.any { it.status == CourseStatus.NOT_TAKEN })
         assertEquals(1, result.courses.map { it.smallGroupId }.distinct().size)
     }
 
     @Test
     fun parsesManualDetailStatusesFromSavedHtml() {
-        val result = parser.parse(fixture("small_group_detail_7.html"), ImportPageType.CURRICULUM_COURSES)
+        val result = parser.parse(fixture("curriculum-course-statuses.html"), JnuPageType.CURRICULUM_COURSES)
 
         assertTrue(result.courses.any { it.status == CourseStatus.PASSED })
         assertTrue(result.courses.any { it.status == CourseStatus.TAKING })
@@ -96,7 +95,7 @@ class AcademicHtmlParserTest {
               ]
             }
             """.trimIndent(),
-            ImportPageType.ALL_CURRICULUM_COURSES,
+            JnuPageType.ALL_CURRICULUM_COURSES,
         )
 
         assertEquals(6, result.courses.size)
@@ -110,15 +109,16 @@ class AcademicHtmlParserTest {
 
     @Test
     fun parsesTranscriptRows() {
-        val result = parser.parse(fixture("transcript.html"), ImportPageType.TRANSCRIPT)
+        val result = parser.parse(fixture("transcript.html"), JnuPageType.TRANSCRIPT)
 
-        assertTrue(result.courses.any { it.code == "01010017" && it.score == 88.0 && it.status == CourseStatus.PASSED })
-        assertTrue(result.courses.size > 40)
+        assertTrue(result.courses.any { it.code == "COURSE101" && it.score == 88.0 && it.status == CourseStatus.PASSED })
+        assertTrue(result.courses.any { it.code == "COURSE102" && it.status == CourseStatus.FAILED })
+        assertEquals(3, result.courses.size)
     }
 
     @Test
     fun parsesExamCards() {
-        val result = parser.parse(fixture("exams.html"), ImportPageType.EXAMS)
+        val result = parser.parse(fixture("exams.html"), JnuPageType.EXAMS)
 
         assertTrue(result.exams.any { it.location.contains("414") && it.seatNo == "86" })
     }
@@ -137,7 +137,7 @@ class AcademicHtmlParserTest {
               </body>
             </html>
             """.trimIndent(),
-            ImportPageType.EXAMS,
+            JnuPageType.EXAMS,
         )
 
         assertTrue(result.exams.isEmpty())
@@ -145,7 +145,7 @@ class AcademicHtmlParserTest {
 
     @Test
     fun parsesScheduleRows() {
-        val result = parser.parse(fixture("我的课表.html"), ImportPageType.SCHEDULE)
+        val result = parser.parse(fixture("schedule.html"), JnuPageType.SCHEDULE)
 
         assertTrue(result.classSessions.isNotEmpty())
         assertTrue(result.classSessions.any { it.dayOfWeek == 5 && it.startSection == 1 })
@@ -166,7 +166,7 @@ class AcademicHtmlParserTest {
               ]
             }
             """.trimIndent(),
-            ImportPageType.SCHEDULE,
+            JnuPageType.SCHEDULE,
         )
 
         assertEquals(3, result.classSessions.size)
@@ -189,7 +189,7 @@ class AcademicHtmlParserTest {
               }
             }
             """.trimIndent(),
-            ImportPageType.SCHEDULE,
+            JnuPageType.SCHEDULE,
         )
 
         assertEquals(1, result.classSessions.size)
@@ -207,7 +207,7 @@ class AcademicHtmlParserTest {
               ]
             }
             """.trimIndent(),
-            ImportPageType.SCHEDULE,
+            JnuPageType.SCHEDULE,
         )
 
         assertEquals("1-18周", result.classSessions.first { it.courseName == "示例课程A" }.weeksText)
@@ -232,7 +232,7 @@ class AcademicHtmlParserTest {
               ]
             }
             """.trimIndent(),
-            ImportPageType.SCHEDULE,
+            JnuPageType.SCHEDULE,
         )
 
         assertEquals(1, result.classSessions.size)
@@ -246,12 +246,8 @@ class AcademicHtmlParserTest {
     }
 
     private fun fixture(name: String): String {
-        var dir: File? = File(System.getProperty("user.dir")).absoluteFile
-        while (dir != null) {
-            val candidate = File(dir, name)
-            if (candidate.exists()) return candidate.readText()
-            dir = dir.parentFile
-        }
-        error("Missing fixture $name from ${System.getProperty("user.dir")}")
+        return requireNotNull(javaClass.classLoader?.getResourceAsStream("fixtures/$name")) {
+            "Missing test fixture fixtures/$name"
+        }.bufferedReader().use { it.readText() }
     }
 }

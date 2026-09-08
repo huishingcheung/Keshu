@@ -4,4 +4,12 @@
     <string name="schedule_widget_name">Keshu schedule</string>
     <string name="dashboard_widget_description">View and complete tasks</string>
     <string name="schedule_widget_description">View today’s classes and upcoming exams</string>
+    <string name="widget_tasks_title">Tasks</string>
+    <string name="widget_add_task">Add task</string>
+    <string name="widget_add_first_task">Add your first task</string>
+    <string name="widget_today_schedule">Today’s classes</string>
+    <string name="widget_date_placeholder">July 1 · Wednesday</string>
+    <string name="widget_no_classes">No classes today</string>
+    <string name="widget_exam_label">Exam</string>
+    <string name="widget_count_zero">0</string>
 </resources>

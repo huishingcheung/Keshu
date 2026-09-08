@@ -24,7 +24,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
-                android:text="今日课程"
+                android:text="@string/widget_today_schedule"
                 android:textColor="#10213F"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -32,7 +32,7 @@
                 android:id="@+id/schedule_widget_date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="7月1日 星期三"
+                android:text="@string/widget_date_placeholder"
                 android:textColor="#5A667A"
                 android:textSize="11sp" />
         </LinearLayout>
@@ -41,7 +41,7 @@
             android:layout_width="34dp"
             android:layout_height="34dp"
             android:background="@drawable/widget_accent_background"
-            android:contentDescription="今日课程"
+            android:contentDescription="@string/widget_today_schedule"
             android:padding="7dp"
             android:scaleType="centerInside"
             android:src="@drawable/ic_widget_schedule" />
@@ -53,7 +53,7 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:gravity="center"
-        android:text="今天没有课程，留点时间给自己"
+        android:text="@string/widget_no_classes"
         android:textColor="#5A667A"
         android:textSize="13sp" />
 
@@ -86,7 +86,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="考试"
+            android:text="@string/widget_exam_label"
             android:textColor="#C7650A"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -115,7 +115,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="#5A667A"
-                android:textSize="10sp" />
+                android:textSize="11sp" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

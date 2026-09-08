@@ -5,6 +5,24 @@ plugins {
     id("org.jetbrains.kotlin.kapt")
 }
 
+val releaseKeystorePath = providers.environmentVariable("KESHU_KEYSTORE_PATH").orNull
+val releaseKeystorePassword = providers.environmentVariable("KESHU_KEYSTORE_PASSWORD").orNull
+val releaseKeyAlias = providers.environmentVariable("KESHU_KEY_ALIAS").orNull
+val releaseKeyPassword = providers.environmentVariable("KESHU_KEY_PASSWORD").orNull
+val releaseSigningValues = listOf(
+    releaseKeystorePath,
+    releaseKeystorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword,
+)
+val hasAnyReleaseSigningValue = releaseSigningValues.any { !it.isNullOrBlank() }
+val hasCompleteReleaseSigning = releaseSigningValues.all { !it.isNullOrBlank() }
+
+check(!hasAnyReleaseSigningValue || hasCompleteReleaseSigning) {
+    "Release signing requires KESHU_KEYSTORE_PATH, KESHU_KEYSTORE_PASSWORD, " +
+        "KESHU_KEY_ALIAS, and KESHU_KEY_PASSWORD."
+}
+
 android {
     namespace = "com.keshu.mobile"
     compileSdk = 35
@@ -13,14 +31,32 @@ android {
         applicationId = "com.keshu.mobile"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.3.1"
+        versionCode = 6
+        versionName = "0.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
             annotationProcessorOptions {
                 argument("room.schemaLocation", "$projectDir/schemas")
             }
+        }
+    }
+
+    signingConfigs {
+        if (hasCompleteReleaseSigning) {
+            create("release") {
+                storeFile = file(requireNotNull(releaseKeystorePath))
+                storePassword = requireNotNull(releaseKeystorePassword)
+                keyAlias = requireNotNull(releaseKeyAlias)
+                keyPassword = requireNotNull(releaseKeyPassword)
+                storeType = "PKCS12"
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 

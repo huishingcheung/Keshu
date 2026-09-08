@@ -28,6 +28,13 @@ replay_pid*.log
 *.hprof
 *.apk
 
+# Android release signing
+*.jks
+*.keystore
+*.p12
+*.pfx
+keystore.properties
+
 # Operating system
 .DS_Store
 Thumbs.db

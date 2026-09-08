@@ -21,7 +21,12 @@ data class ExamAvailability(
     }
 }
 
-class ExamAvailabilityPreferences(context: Context) {
+interface ExamAvailabilityStore {
+    fun markUnavailable(visibilityRange: String?)
+    fun clearUnavailable()
+}
+
+class ExamAvailabilityPreferences(context: Context) : ExamAvailabilityStore {
     private val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
 
     fun getUnavailable(): ExamAvailability? {
@@ -29,14 +34,14 @@ class ExamAvailabilityPreferences(context: Context) {
         return ExamAvailability(preferences.getString(KEY_VISIBILITY_RANGE, null))
     }
 
-    fun markUnavailable(visibilityRange: String?) {
+    override fun markUnavailable(visibilityRange: String?) {
         preferences.edit()
             .putBoolean(KEY_UNAVAILABLE, true)
             .putString(KEY_VISIBILITY_RANGE, visibilityRange)
             .apply()
     }
 
-    fun clearUnavailable() {
+    override fun clearUnavailable() {
         preferences.edit()
             .remove(KEY_UNAVAILABLE)
             .remove(KEY_VISIBILITY_RANGE)

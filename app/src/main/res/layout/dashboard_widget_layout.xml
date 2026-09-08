@@ -18,7 +18,7 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:background="@drawable/widget_accent_background"
-            android:contentDescription="待办任务"
+            android:contentDescription="@string/widget_tasks_title"
             android:padding="7dp"
             android:scaleType="centerInside"
             android:src="@drawable/ic_widget_check" />
@@ -30,7 +30,7 @@
             android:layout_marginStart="10dp"
             android:layout_weight="1"
             android:includeFontPadding="false"
-            android:text="待办任务"
+            android:text="@string/widget_tasks_title"
             android:textColor="#10213F"
             android:textSize="16sp"
             android:textStyle="bold" />
@@ -42,7 +42,7 @@
             android:background="@drawable/widget_count_background"
             android:gravity="center"
             android:includeFontPadding="false"
-            android:text="0"
+            android:text="@string/widget_count_zero"
             android:textColor="#155EEF"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -61,7 +61,7 @@
             android:layout_width="52dp"
             android:layout_height="52dp"
             android:background="@drawable/widget_add_background"
-            android:contentDescription="添加待办"
+            android:contentDescription="@string/widget_add_task"
             android:padding="13dp"
             android:scaleType="centerInside"
             android:src="@drawable/ic_widget_add" />
@@ -70,7 +70,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="添加第一条待办"
+            android:text="@string/widget_add_first_task"
             android:textColor="#5A667A"
             android:textSize="12sp" />
     </LinearLayout>
