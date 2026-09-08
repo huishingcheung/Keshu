@@ -4,7 +4,7 @@
 
 [![Android CI](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml/badge.svg)](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml)
 [![License: GPL-3.0-only](https://img.shields.io/badge/License-GPL--3.0--only-blue.svg)](LICENSE)
-[![Download](https://img.shields.io/badge/Download-v0.4.0%20Preview-155EEF?logo=android&logoColor=white)](https://github.com/huishingcheung/Keshu/releases/download/v0.4.0/Keshu-v0.4.0-preview.apk)
+[![Download](https://img.shields.io/badge/Download-v0.4.1%20Preview-155EEF?logo=android&logoColor=white)](https://github.com/huishingcheung/Keshu/releases/download/v0.4.1/Keshu-v0.4.1-preview.apk)
 
 **Classes, credits, tasks, and exams—organized around today.**
 
@@ -15,7 +15,7 @@ Keshu is a local-first Android academic companion. It imports records from a sup
 
 ## Install
 
-[Download Keshu v0.4.0 Preview](https://github.com/huishingcheung/Keshu/releases/download/v0.4.0/Keshu-v0.4.0-preview.apk) · [View all releases](https://github.com/huishingcheung/Keshu/releases)
+[Download Keshu v0.4.1 Preview](https://github.com/huishingcheung/Keshu/releases/download/v0.4.1/Keshu-v0.4.1-preview.apk) · [View all releases](https://github.com/huishingcheung/Keshu/releases)
 
 Keshu requires Android 8.0 or later. The APK is distributed directly through GitHub Releases and is not currently available from an app store.
 
