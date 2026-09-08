@@ -1,10 +1,8 @@
 package com.keshu.mobile.presentation.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -35,27 +33,6 @@ private val LightColors = lightColorScheme(
     outline = Color(0xFFD7DEE9),
 )
 
-private val DarkColors = darkColorScheme(
-    primary = Color(0xFFAEC6FF),
-    onPrimary = Color(0xFF002D69),
-    primaryContainer = Color(0xFF16498F),
-    onPrimaryContainer = Color(0xFFD9E6FF),
-    secondary = Color(0xFF70D5B0),
-    onSecondary = Color(0xFF003829),
-    secondaryContainer = Color(0xFF07543F),
-    onSecondaryContainer = Color(0xFFB7F1D9),
-    tertiary = Color(0xFFFFB873),
-    onTertiary = Color(0xFF4B2700),
-    tertiaryContainer = Color(0xFF703D08),
-    onTertiaryContainer = Color(0xFFFFDCC0),
-    background = Color(0xFF0D1420),
-    surface = Color(0xFF121B29),
-    onSurface = Color(0xFFE6ECF5),
-    surfaceVariant = Color(0xFF1D2939),
-    onSurfaceVariant = Color(0xFFB8C3D3),
-    outline = Color(0xFF3C4A5E),
-)
-
 private val AppTypography = Typography(
     displaySmall = TextStyle(fontSize = 36.sp, lineHeight = 42.sp, fontWeight = FontWeight.Bold),
     headlineMedium = TextStyle(fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold),
@@ -82,7 +59,7 @@ private val AppShapes = Shapes(
 @Composable
 fun KeshuTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = if (isSystemInDarkTheme()) DarkColors else LightColors,
+        colorScheme = LightColors,
         typography = AppTypography,
         shapes = AppShapes,
         content = content,

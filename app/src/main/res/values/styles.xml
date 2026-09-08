@@ -1,5 +1,7 @@
 <resources>
-    <style name="Theme.Keshu" parent="android:style/Theme.Material.Light.NoActionBar" />
+    <style name="Theme.Keshu" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
 
     <style name="WidgetTaskRow">
         <item name="android:layout_width">match_parent</item>

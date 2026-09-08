@@ -197,6 +197,24 @@ class AcademicHtmlParserTest {
     }
 
     @Test
+    fun combinesScheduleStartAndEndWeekFields() {
+        val result = parser.parse(
+            """
+            {
+              "rows": [
+                {"KCH": "COURSE01", "KCM": "示例课程A", "QSZC": 1, "JSZC": 18, "SKXQ": 4, "KSJC": 3, "JSJC": 4},
+                {"KCH": "COURSE02", "KCM": "示例课程B", "QSZC": "1", "JSZC": "12", "SKXQ": 6, "KSJC": 6, "JSJC": 8}
+              ]
+            }
+            """.trimIndent(),
+            ImportPageType.SCHEDULE,
+        )
+
+        assertEquals("1-18周", result.classSessions.first { it.courseName == "示例课程A" }.weeksText)
+        assertEquals("1-12周", result.classSessions.first { it.courseName == "示例课程B" }.weeksText)
+    }
+
+    @Test
     fun prefersSpecialMeetingTimeFromScheduleNote() {
         val result = parser.parse(
             """

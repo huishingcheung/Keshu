@@ -6,7 +6,7 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/compose)
 [![Android CI](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml/badge.svg)](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml)
-[![Download](https://img.shields.io/badge/Download-v0.3.0%20Preview-155EEF?logo=android&logoColor=white)](https://github.com/huishingcheung/Keshu/releases/download/v0.3.0/Keshu-v0.3.0-preview.apk)
+[![Download](https://img.shields.io/badge/Download-v0.3.1%20Preview-155EEF?logo=android&logoColor=white)](https://github.com/huishingcheung/Keshu/releases/download/v0.3.1/Keshu-v0.3.1-preview.apk)
 
 **Your classes, credits, tasks, and exams—organized around today.**
 
@@ -19,7 +19,7 @@ The integration is designed to grow through school-specific data sources. The cu
 
 ## Download
 
-[Download Keshu v0.3.0 Preview](https://github.com/huishingcheung/Keshu/releases/download/v0.3.0/Keshu-v0.3.0-preview.apk) · [View all releases](https://github.com/huishingcheung/Keshu/releases)
+[Download Keshu v0.3.1 Preview](https://github.com/huishingcheung/Keshu/releases/download/v0.3.1/Keshu-v0.3.1-preview.apk) · [View all releases](https://github.com/huishingcheung/Keshu/releases)
 
 The preview APK is debug-signed and intended for evaluation. Because Keshu uses the new application ID `com.keshu.mobile`, it installs separately from earlier JNU Smart Edu builds and does not migrate their local data.
 

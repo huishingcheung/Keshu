@@ -344,6 +344,11 @@ class AcademicHtmlParser {
                     ?: parsedTime?.endSection
                     ?: startSection
                 val location = row.optFirstString("JASMC", "CDMC", "JASMC_DISPLAY", "SKDD", "SKDD_DISPLAY")
+                val weeksText = parsedTime?.weeksText
+                    ?: row.optFirstString("SKZCMC", "ZCMC", "ZCMC_DISPLAY", "SKZC", "ZC")
+                        .takeIf { it.isNotBlank() }
+                    ?: row.scheduleWeekRange()
+                    ?: "全周"
                 add(
                     ClassSessionEntity(
                         id = stableId("class", "$term-$code-$courseName-$day-$startSection-$endSection-$location"),
@@ -352,19 +357,7 @@ class AcademicHtmlParser {
                         courseName = courseName,
                         teacher = row.optFirstString("JSXM", "RKJS", "JSXM_DISPLAY", "SKJS"),
                         credit = row.optFirstDouble("KCXF", "XF"),
-                        weeksText = parsedNote?.weeksText ?: noteText.ifBlank {
-                            row.optFirstString(
-                            "SKSJ",
-                            "PKSJ",
-                            "SJD",
-                            "SKZCMC",
-                            "ZCMC",
-                            "ZC",
-                            "SKZC",
-                            "QSZC",
-                            "ZCMC_DISPLAY",
-                            )
-                        }.ifBlank { parsedTime?.weeksText ?: "全周" },
+                        weeksText = weeksText,
                         dayOfWeek = day,
                         startSection = startSection,
                         endSection = endSection,
@@ -492,6 +485,17 @@ private fun JSONObject.optFirstString(vararg names: String): String {
         if (text.isNotBlank() && text != "null" && text != "-") return text
     }
     return ""
+}
+
+private fun JSONObject.scheduleWeekRange(): String? {
+    val start = optFirstInt("QSZC", "QSSKZC", "STARTWEEK")
+    val end = optFirstInt("JSZC", "JSSKZC", "ENDWEEK")
+    return when {
+        start != null && end != null && start != end -> "${start}-${end}周"
+        start != null -> "${start}周"
+        end != null -> "1-${end}周"
+        else -> null
+    }
 }
 
 private fun JSONObject.optFirstDouble(vararg names: String): Double? {
