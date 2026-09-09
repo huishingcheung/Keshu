@@ -64,6 +64,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.keshu.mobile.data.local.ClassPeriodTime
+import com.keshu.mobile.data.local.ClassTimeSettings
 import com.keshu.mobile.data.local.entity.ClassSessionEntity
 import com.keshu.mobile.presentation.components.*
 import java.time.LocalDate
@@ -254,9 +256,12 @@ internal fun ScheduleWeekGrid(
     sessions: List<ClassSessionEntity>,
     selectedWeek: Int?,
     semesterStartDate: String,
+    classTimeSettings: ClassTimeSettings,
     onSessionClick: (ClassSessionEntity) -> Unit,
 ) {
-    val maxSection = remember(sessions) { sessions.maxOfOrNull { it.endSection }?.coerceAtLeast(12) ?: 12 }
+    val maxSection = remember(sessions, classTimeSettings) {
+        maxOf(sessions.maxOfOrNull { it.endSection } ?: 0, classTimeSettings.periods.size, 12)
+    }
     val weekDates = remember(semesterStartDate, selectedWeek) { scheduleWeekDates(semesterStartDate, selectedWeek) }
     val sessionsByDay = remember(sessions) { sessions.groupBy { it.dayOfWeek } }
     val sectionHeight = 68.dp
@@ -309,7 +314,7 @@ internal fun ScheduleWeekGrid(
                 Box(Modifier.fillMaxWidth().requiredHeight(sectionHeight * maxSection)) {
                     Column(Modifier.width(timeWidth)) {
                         (1..maxSection).forEach { section ->
-                            ScheduleTimeCell(section, sectionHeight)
+                            ScheduleTimeCell(section, sectionHeight, classTimeSettings.period(section))
                         }
                     }
                     Row(
@@ -388,7 +393,11 @@ internal fun ScheduleDayHeader(
 }
 
 @Composable
-internal fun ScheduleTimeCell(section: Int, sectionHeight: androidx.compose.ui.unit.Dp) {
+internal fun ScheduleTimeCell(
+    section: Int,
+    sectionHeight: androidx.compose.ui.unit.Dp,
+    period: ClassPeriodTime?,
+) {
     Box(modifier = Modifier.width(64.dp).height(sectionHeight).padding(top = 10.dp), contentAlignment = Alignment.TopCenter) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
@@ -397,9 +406,9 @@ internal fun ScheduleTimeCell(section: Int, sectionHeight: androidx.compose.ui.u
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            scheduleSectionTime(section)?.let { times ->
-                Text(times.first, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(times.second, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            period?.let {
+                Text(it.start, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(it.end, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

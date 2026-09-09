@@ -49,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.keshu.mobile.data.local.ExamAvailability
+import com.keshu.mobile.data.local.ClassTimeSettings
 import com.keshu.mobile.data.local.entity.TaskEntity
 import com.keshu.mobile.presentation.dashboard.DashboardUiState
 import com.keshu.mobile.presentation.components.*
@@ -61,6 +62,7 @@ import java.time.format.DateTimeFormatter
 internal fun HomePage(
     state: DashboardUiState,
     currentWeek: Int?,
+    classTimeSettings: ClassTimeSettings,
     onAddTask: (String, Long, Boolean) -> Unit,
     onUpdateTask: (TaskEntity, String, Long, Boolean) -> Unit,
     onSetTaskDone: (TaskEntity, Boolean) -> Unit,
@@ -85,11 +87,11 @@ internal fun HomePage(
             .filter { it.dayOfWeek == todayDayOfWeek && it.occursInWeek(currentWeek) }
             .sortedBy { it.startSection }
     }
-    val nextSession = remember(todaySessions) {
+    val nextSession = remember(todaySessions, classTimeSettings) {
         val currentMinutes = java.time.LocalTime.now().let { it.hour * 60 + it.minute }
         todaySessions.firstOrNull { session ->
-            scheduleSectionTime(session.endSection)
-                ?.second
+            classTimeSettings.period(session.endSection)
+                ?.end
                 ?.split(":")
                 ?.let { parts -> parts[0].toInt() * 60 + parts[1].toInt() >= currentMinutes }
                 ?: true
@@ -110,8 +112,8 @@ internal fun HomePage(
                     value = nextSession?.courseName ?: "今天没有更多课程",
                     unit = "",
                     caption = nextSession?.let { session ->
-                        val start = scheduleSectionTime(session.startSection)?.first.orEmpty()
-                        val end = scheduleSectionTime(session.endSection)?.second.orEmpty()
+                        val start = classTimeSettings.period(session.startSection)?.start.orEmpty()
+                        val end = classTimeSettings.period(session.endSection)?.end.orEmpty()
                         listOf("$start–$end".trim('–'), session.location)
                             .filter { it.isNotBlank() }
                             .joinToString(" · ")

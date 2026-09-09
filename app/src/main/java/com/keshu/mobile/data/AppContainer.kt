@@ -13,6 +13,7 @@ import com.keshu.mobile.data.portal.JnuDataSourceFactory
 import com.keshu.mobile.data.repository.AcademicRepository
 import com.keshu.mobile.data.repository.AdvisorRepository
 import com.keshu.mobile.data.source.AcademicDataSourceRegistry
+import com.keshu.mobile.data.update.AppUpdateChecker
 import com.keshu.mobile.domain.usecase.BuildCreditTreeUseCase
 import com.keshu.mobile.domain.usecase.AddTaskUseCase
 import com.keshu.mobile.domain.usecase.GetCourseAdviceUseCase
@@ -46,6 +47,11 @@ class AppContainer(context: Context) {
         .retryOnConnectionFailure(true)
         .build()
     private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+    private val updateHttp = okHttp.newBuilder()
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .readTimeout(8, TimeUnit.SECONDS)
+        .callTimeout(10, TimeUnit.SECONDS)
+        .build()
     private val deepSeekApi = Retrofit.Builder()
         .baseUrl("https://api.deepseek.com/")
         .client(okHttp)
@@ -81,6 +87,11 @@ class AppContainer(context: Context) {
     val importAcademicDataUseCase = ImportAcademicDataUseCase(repository)
     val getCourseAdviceUseCase = GetCourseAdviceUseCase(advisorRepository)
     val addTaskUseCase = AddTaskUseCase(database.taskDao(), ExamAlarmScheduler(context), context.applicationContext)
+    val appUpdateChecker = AppUpdateChecker(
+        client = updateHttp,
+        moshi = moshi,
+        preferences = context.applicationContext.getSharedPreferences("app_update", Context.MODE_PRIVATE),
+    )
     val scheduleExamAlarmsUseCase = ScheduleExamAlarmsUseCase(
         database.examDao(),
         ExamAlarmScheduler(context),

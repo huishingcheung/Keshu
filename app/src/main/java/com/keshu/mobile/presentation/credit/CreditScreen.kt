@@ -57,6 +57,7 @@ internal fun CreditPage(state: DashboardUiState) {
     val earnedCredits = tree?.graduation?.earnedCredits ?: 0.0
     val takingCredits = state.creditSummary.takingCredits
     val displayedCredits = earnedCredits + if (includeTakingProjection) takingCredits else 0.0
+    val treeProjection = remember(tree) { tree?.let(::buildCreditTreeProjection) }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 116.dp),
@@ -72,13 +73,21 @@ internal fun CreditPage(state: DashboardUiState) {
                 onProjectionChange = { includeTakingProjection = it },
             )
         }
-        item { SectionHeader("学分树", "点开模块查看课程") }
+        item {
+            SectionHeader(
+                "学分树",
+                if (includeTakingProjection) "预计进度 · 已计入在修课程" else "点开模块查看课程",
+            )
+        }
         if (tree == null) {
             item { EmptyCard("暂无学分数据", "同步培养方案和详细课程后，学分进度会显示在这里。") }
         } else {
             items(tree.largeGroups, key = { it.id }) { group ->
                 LargeGroupCard(
                     group = group,
+                    projection = treeProjection?.largeGroups?.get(group.id),
+                    smallGroupProjections = treeProjection?.smallGroups.orEmpty(),
+                    projected = includeTakingProjection,
                     expanded = group.id in expandedLargeGroups,
                     expandedSmallGroups = expandedSmallGroups,
                     onToggle = { expandedLargeGroups = expandedLargeGroups.toggle(group.id) },
@@ -227,11 +236,20 @@ internal fun CourseStatusRow(course: CourseEntity, modifier: Modifier = Modifier
 @Composable
 internal fun LargeGroupCard(
     group: LargeGroupProgress,
+    projection: ProjectedLargeGroupMetrics?,
+    smallGroupProjections: Map<String, ProjectedCreditMetrics>,
+    projected: Boolean,
     expanded: Boolean,
     expandedSmallGroups: Set<String>,
     onToggle: () -> Unit,
     onToggleSmallGroup: (String) -> Unit,
 ) {
+    val displayedCredits = if (projected) projection?.credits ?: group.earnedCredits else group.earnedCredits
+    val metSmallGroupCount = if (projected) {
+        projection?.metSmallGroupCount ?: group.metSmallGroupCount
+    } else {
+        group.metSmallGroupCount
+    }
     Surface(
         shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -249,12 +267,20 @@ internal fun LargeGroupCard(
                 Spacer(Modifier.width(8.dp))
                 Column(Modifier.weight(1f)) {
                     Text(group.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text("${group.earnedCredits.formatCredit()} / ${group.requiredCredits.formatCredit()} 学分", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        "${if (projected) "预计 " else ""}${displayedCredits.formatCredit()} / ${group.requiredCredits.formatCredit()} 学分",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
-                Text("${group.metSmallGroupCount}/${group.smallGroupCount}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                Text(
+                    "${if (projected) "预计 " else ""}$metSmallGroupCount/${group.smallGroupCount}",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
             LinearProgressIndicator(
-                progress = { group.progressFraction() },
+                progress = { creditProgress(displayedCredits, group.requiredCredits) },
                 modifier = Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(99.dp)),
             )
             if (expanded) {
@@ -262,6 +288,8 @@ internal fun LargeGroupCard(
                 group.childGroups.forEach { child ->
                     SmallGroupTree(
                         group = child,
+                        projections = smallGroupProjections,
+                        projected = projected,
                         expandedSmallGroups = expandedSmallGroups,
                         onToggle = onToggleSmallGroup,
                     )
@@ -274,11 +302,17 @@ internal fun LargeGroupCard(
 @Composable
 internal fun SmallGroupTree(
     group: SmallGroupProgress,
+    projections: Map<String, ProjectedCreditMetrics>,
+    projected: Boolean,
     expandedSmallGroups: Set<String>,
     onToggle: (String) -> Unit,
 ) {
     val expanded = group.id in expandedSmallGroups
     val hasChildren = group.childGroups.isNotEmpty() || group.courses.isNotEmpty()
+    val projectedMetrics = projections[group.id]
+    val displayedCredits = if (projected) projectedMetrics?.credits ?: group.earnedCredits else group.earnedCredits
+    val displayedMet = if (projected) projectedMetrics?.met ?: group.met else group.met
+    val displayedGap = if (projected) projectedMetrics?.gapCredits ?: group.gapCredits else group.gapCredits
     Column(
         modifier = Modifier.padding(start = ((group.depth - 1).coerceAtLeast(0) * 14).dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -297,15 +331,20 @@ internal fun SmallGroupTree(
                 Column(Modifier.weight(1f)) {
                     Text(group.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
-                        "${group.earnedCredits.formatCredit()} / ${group.requiredCredits.formatCredit()} 学分 · ${group.courses.size} 门课程",
+                        "${if (projected) "预计 " else ""}${displayedCredits.formatCredit()} / ${group.requiredCredits.formatCredit()} 学分 · ${group.courses.size} 门课程",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 Text(
-                    if (group.met) "达标" else "差 ${group.gapCredits.formatCredit()}",
+                    when {
+                        projected && displayedMet -> "预计达标"
+                        projected -> "预计差 ${displayedGap.formatCredit()}"
+                        displayedMet -> "达标"
+                        else -> "差 ${displayedGap.formatCredit()}"
+                    },
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (group.met) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
+                    color = if (displayedMet) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
                 )
         }
         if (expanded) {
@@ -315,6 +354,8 @@ internal fun SmallGroupTree(
             group.childGroups.forEach { child ->
                 SmallGroupTree(
                     group = child,
+                    projections = projections,
+                    projected = projected,
                     expandedSmallGroups = expandedSmallGroups,
                     onToggle = onToggle,
                 )

@@ -16,6 +16,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Lock
@@ -26,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -63,6 +67,8 @@ internal fun AdvisorIntro() {
 @Composable
 internal fun AdvisorPage(state: DashboardUiState, onRequestAdvice: (String) -> Unit) {
     var apiKey by remember { mutableStateOf("") }
+    var showApiKeyGuide by remember { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -80,6 +86,21 @@ internal fun AdvisorPage(state: DashboardUiState, onRequestAdvice: (String) -> U
             ) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("连接 DeepSeek", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    TextButton(
+                        onClick = { showApiKeyGuide = !showApiKeyGuide },
+                        modifier = Modifier.align(Alignment.Start),
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(if (showApiKeyGuide) "收起获取教程" else "如何获取 API Key？")
+                    }
+                    if (showApiKeyGuide) {
+                        ApiKeyGuide(
+                            onOpenOfficialPlatform = {
+                                uriHandler.openUri("https://platform.deepseek.com/api_keys")
+                            },
+                        )
+                    }
                     OutlinedTextField(
                         value = apiKey,
                         onValueChange = { apiKey = it },
@@ -126,6 +147,39 @@ internal fun AdvisorPage(state: DashboardUiState, onRequestAdvice: (String) -> U
                     RecommendationCard(recommendation)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ApiKeyGuide(onOpenOfficialPlatform: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(9.dp),
+        ) {
+            Text("获取步骤", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text("1. 打开 DeepSeek 开放平台，注册或登录账号。", style = MaterialTheme.typography.bodySmall)
+            Text("2. 进入 API Keys 页面，点击创建 API Key。", style = MaterialTheme.typography.bodySmall)
+            Text("3. 创建后立即复制以 sk- 开头的密钥，粘贴到下方输入框。", style = MaterialTheme.typography.bodySmall)
+            Text("4. 如果提示余额不足，请在官方平台充值后重试。API 调用可能产生费用，价格以官方说明为准。", style = MaterialTheme.typography.bodySmall)
+            TextButton(onClick = onOpenOfficialPlatform) {
+                Text("打开 DeepSeek API Keys")
+                Spacer(Modifier.width(6.dp))
+                Icon(
+                    Icons.AutoMirrored.Filled.OpenInNew,
+                    contentDescription = "使用浏览器打开 DeepSeek 官方 API Keys 页面",
+                    modifier = Modifier.size(17.dp),
+                )
+            }
+            Text(
+                "请勿把密钥发给他人。课枢只在本次生成建议时使用，不会保存密钥。",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

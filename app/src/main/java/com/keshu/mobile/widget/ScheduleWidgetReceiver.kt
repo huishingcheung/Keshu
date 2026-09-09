@@ -11,6 +11,8 @@ import android.widget.RemoteViews
 import com.keshu.mobile.KeshuApp
 import com.keshu.mobile.MainActivity
 import com.keshu.mobile.R
+import com.keshu.mobile.data.local.ClassTimePreferences
+import com.keshu.mobile.data.local.ClassTimeSettings
 import com.keshu.mobile.data.local.entity.ClassSessionEntity
 import java.time.Instant
 import java.time.LocalDate
@@ -38,6 +40,9 @@ class ScheduleWidgetReceiver : AppWidgetProvider() {
                 val allSessions = database.classScheduleDao().getAll()
                 val currentTerm = allSessions.firstOrNull()?.term
                 val currentWeek = currentWeek(context)
+                val classTimeSettings = ClassTimePreferences(
+                    context.getSharedPreferences("academic_settings", Context.MODE_PRIVATE),
+                ).load()
                 val today = LocalDate.now()
                 val sessions = allSessions
                     .asSequence()
@@ -67,6 +72,7 @@ class ScheduleWidgetReceiver : AppWidgetProvider() {
                         sessions = sessions.take(maxCourseRows),
                         openApp = openSchedule,
                         showEmptyState = sessions.isEmpty() && !(compact && hasExamInfo),
+                        classTimeSettings = classTimeSettings,
                     )
                     views.setViewVisibility(
                         R.id.schedule_widget_exam,
@@ -114,6 +120,7 @@ class ScheduleWidgetReceiver : AppWidgetProvider() {
         sessions: List<ClassSessionEntity>,
         openApp: PendingIntent,
         showEmptyState: Boolean,
+        classTimeSettings: ClassTimeSettings,
     ) {
         val rowIds = intArrayOf(R.id.schedule_widget_course_1, R.id.schedule_widget_course_2, R.id.schedule_widget_course_3)
         val timeIds = intArrayOf(R.id.schedule_widget_course_time_1, R.id.schedule_widget_course_time_2, R.id.schedule_widget_course_time_3)
@@ -124,7 +131,10 @@ class ScheduleWidgetReceiver : AppWidgetProvider() {
             val session = sessions.getOrNull(index)
             views.setViewVisibility(rowIds[index], if (session == null) View.GONE else View.VISIBLE)
             if (session != null) {
-                views.setTextViewText(timeIds[index], sectionTime(session.startSection))
+                views.setTextViewText(
+                    timeIds[index],
+                    classTimeSettings.period(session.startSection)?.start ?: "第${session.startSection}节",
+                )
                 views.setTextViewText(titleIds[index], session.courseName)
                 views.setTextViewText(roomIds[index], session.location.ifBlank { "教室待定" })
                 views.setOnClickPendingIntent(rowIds[index], openApp)
@@ -164,24 +174,6 @@ class ScheduleWidgetReceiver : AppWidgetProvider() {
                 .filter { (!oddOnly || it % 2 == 1) && (!evenOnly || it % 2 == 0) }
         }
         return if (values.isEmpty()) (1..30).toSet() else values
-    }
-
-    private fun sectionTime(section: Int): String {
-        return when (section) {
-            1 -> "08:30"
-            2 -> "09:25"
-            3 -> "10:30"
-            4 -> "11:25"
-            5 -> "12:20"
-            6 -> "14:00"
-            7 -> "14:55"
-            8 -> "15:50"
-            9 -> "16:45"
-            10 -> "19:00"
-            11 -> "19:55"
-            12 -> "20:50"
-            else -> "第${section}节"
-        }
     }
 
     private fun formatExamTime(millis: Long): String {

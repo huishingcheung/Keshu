@@ -6,14 +6,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -39,8 +42,170 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.keshu.mobile.data.local.ClassPeriodTime
+import com.keshu.mobile.data.local.ClassTimePresets
+import com.keshu.mobile.data.local.ClassTimeProfile
+import com.keshu.mobile.data.local.ClassTimeSettings
+import com.keshu.mobile.data.local.isValidClassPeriod
 import com.keshu.mobile.data.local.entity.ClassSessionEntity
 import com.keshu.mobile.presentation.components.*
+
+@Composable
+internal fun ClassTimeSettingsCard(
+    settings: ClassTimeSettings,
+    onProfileSelected: (ClassTimeProfile) -> Unit,
+    onEditCustom: () -> Unit,
+) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.48f),
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.Schedule,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.width(8.dp))
+                Column {
+                    Text("上课时间", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        settings.profile.displayName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(
+                    listOf(
+                        ClassTimeProfile.HUAQIAO_PANYU,
+                        ClassTimeProfile.MAIN_ZHUHAI,
+                        ClassTimeProfile.SHENZHEN,
+                    ),
+                    key = { it.id },
+                ) { profile ->
+                    FilterChip(
+                        selected = settings.profile == profile,
+                        onClick = { onProfileSelected(profile) },
+                        label = { Text(profile.displayName, maxLines = 1) },
+                    )
+                }
+                item {
+                    FilterChip(
+                        selected = settings.profile == ClassTimeProfile.CUSTOM,
+                        onClick = onEditCustom,
+                        label = { Text("自定义") },
+                    )
+                }
+            }
+            Text(
+                "所选时间会用于首页、课表和桌面小组件。",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun CustomClassTimeDialog(
+    settings: ClassTimeSettings,
+    onSave: (List<ClassPeriodTime>) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var periods by remember(settings) {
+        mutableStateOf(
+            List(13) { index ->
+                settings.periods.getOrNull(index) ?: ClassTimePresets.mainZhuhai[index]
+            },
+        )
+    }
+    val allValid = periods.all(::isValidClassPeriod)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(enabled = allValid, onClick = { onSave(periods) }) {
+                Text("保存并使用")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("取消") }
+        },
+        title = { Text("自定义上课时间") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    "使用 24 小时制 HH:mm，结束时间需晚于开始时间。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (allValid) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error,
+                )
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = 480.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    itemsIndexed(periods, key = { index, _ -> index }) { index, period ->
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Text(
+                                "第 ${index + 1} 节",
+                                style = MaterialTheme.typography.labelLarge,
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedTextField(
+                                    value = period.start,
+                                    onValueChange = { value ->
+                                        periods = periods.toMutableList().also {
+                                            it[index] = period.copy(start = value.timeInput())
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f).semantics {
+                                        contentDescription = "第 ${index + 1} 节开始时间"
+                                    },
+                                    label = { Text("开始") },
+                                    singleLine = true,
+                                    isError = !isValidTimeText(period.start),
+                                )
+                                OutlinedTextField(
+                                    value = period.end,
+                                    onValueChange = { value ->
+                                        periods = periods.toMutableList().also {
+                                            it[index] = period.copy(end = value.timeInput())
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f).semantics {
+                                        contentDescription = "第 ${index + 1} 节结束时间"
+                                    },
+                                    label = { Text("结束") },
+                                    singleLine = true,
+                                    isError = !isValidTimeText(period.end) || !isValidClassPeriod(period),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+    )
+}
+
+private fun isValidTimeText(value: String): Boolean {
+    val match = Regex("^(\\d{2}):(\\d{2})$").matchEntire(value) ?: return false
+    return match.groupValues[1].toInt() in 0..23 && match.groupValues[2].toInt() in 0..59
+}
+
+private fun String.timeInput(): String = filter { it.isDigit() || it == ':' }.take(5)
 
 @Composable
 internal fun ClassSessionCard(session: ClassSessionEntity, onClick: () -> Unit = {}) {

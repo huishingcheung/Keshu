@@ -17,6 +17,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -34,6 +35,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.keshu.mobile.data.local.ClassPeriodTime
+import com.keshu.mobile.data.local.ClassTimeProfile
+import com.keshu.mobile.data.local.ClassTimeSettings
 import com.keshu.mobile.data.local.entity.ClassSessionEntity
 import com.keshu.mobile.presentation.dashboard.DashboardUiState
 import com.keshu.mobile.presentation.components.*
@@ -43,13 +47,19 @@ import kotlinx.coroutines.launch
 internal fun SchedulePage(
     state: DashboardUiState,
     semesterStartDate: String,
+    classTimeSettings: ClassTimeSettings,
+    showSetupNotice: Boolean,
     onSemesterStartDateChange: (String) -> Unit,
+    onClassTimeProfileChange: (ClassTimeProfile) -> Unit,
+    onCustomClassTimesSave: (List<ClassPeriodTime>) -> Unit,
+    onSetupNoticeDismiss: () -> Unit,
     onSessionSave: (ClassSessionEntity) -> Unit,
 ) {
     var selectedTerm by remember { mutableStateOf<String?>(null) }
     var selectedWeek by remember { mutableStateOf<Int?>(null) }
     var selectedSession by remember { mutableStateOf<ClassSessionEntity?>(null) }
     var showWeekPicker by remember { mutableStateOf(false) }
+    var showCustomTimeEditor by remember { mutableStateOf(false) }
     val drawerState = rememberDrawerState(initialValue = androidx.compose.material3.DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val currentWeek = remember(semesterStartDate) { weekFromSemesterStart(semesterStartDate) }
@@ -108,6 +118,13 @@ internal fun SchedulePage(
                             value = semesterStartDate,
                             currentWeek = currentWeek,
                             onValueChange = onSemesterStartDateChange,
+                        )
+                    }
+                    item {
+                        ClassTimeSettingsCard(
+                            settings = classTimeSettings,
+                            onProfileSelected = onClassTimeProfileChange,
+                            onEditCustom = { showCustomTimeEditor = true },
                         )
                     }
                     if (terms.isNotEmpty()) {
@@ -176,6 +193,7 @@ internal fun SchedulePage(
                         sessions = weekIndex.sessionsByWeek[week].orEmpty(),
                         selectedWeek = week,
                         semesterStartDate = semesterStartDate,
+                        classTimeSettings = classTimeSettings,
                         onSessionClick = { selectedSession = it },
                     )
                 }
@@ -191,6 +209,26 @@ internal fun SchedulePage(
                 showWeekPicker = false
             },
             onDismiss = { showWeekPicker = false },
+        )
+    }
+    if (showSetupNotice) {
+        AlertDialog(
+            onDismissRequest = onSetupNoticeDismiss,
+            confirmButton = {
+                Button(onClick = onSetupNoticeDismiss) { Text("知道了") }
+            },
+            title = { Text("课表使用提示") },
+            text = { Text("使用前请先点击左上角菜单（☰），修改开学日期和课表时间。") },
+        )
+    }
+    if (showCustomTimeEditor) {
+        CustomClassTimeDialog(
+            settings = classTimeSettings,
+            onSave = {
+                onCustomClassTimesSave(it)
+                showCustomTimeEditor = false
+            },
+            onDismiss = { showCustomTimeEditor = false },
         )
     }
     selectedSession?.let { session ->

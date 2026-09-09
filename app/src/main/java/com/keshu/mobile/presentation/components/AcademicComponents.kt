@@ -207,24 +207,6 @@ internal fun scheduleWeekDates(semesterStartDate: String, selectedWeek: Int?): L
     return (0..6).map { weekStart.plusDays(it.toLong()) }
 }
 
-internal fun scheduleSectionTime(section: Int): Pair<String, String>? {
-    return when (section) {
-        1 -> "08:30" to "09:15"
-        2 -> "09:25" to "10:10"
-        3 -> "10:30" to "11:15"
-        4 -> "11:25" to "12:10"
-        5 -> "12:20" to "13:05"
-        6 -> "14:00" to "14:45"
-        7 -> "14:55" to "15:40"
-        8 -> "15:50" to "16:35"
-        9 -> "16:45" to "17:30"
-        10 -> "19:00" to "19:45"
-        11 -> "19:55" to "20:40"
-        12 -> "20:50" to "21:35"
-        else -> null
-    }
-}
-
 internal fun ClassSessionEntity.occursInWeek(week: Int?): Boolean {
     return week == null || week in weekNumbers()
 }
