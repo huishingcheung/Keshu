@@ -17,6 +17,10 @@ function applyLanguage(language, persist = true) {
     selected === 'zh' ? '语言' : 'Language',
   );
 
+  document.querySelectorAll('[data-alt-en][data-alt-zh]').forEach((image) => {
+    image.alt = selected === 'zh' ? image.dataset.altZh : image.dataset.altEn;
+  });
+
   if (persist) {
     try {
       localStorage.setItem('keshu-language', selected);
