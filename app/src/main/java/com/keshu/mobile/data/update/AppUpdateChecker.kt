@@ -16,6 +16,21 @@ data class AppUpdate(
     val releasePageUrl: String,
 )
 
+/**
+ * Outcome of a user-triggered update check. [AppUpdateChecker.checkIfDue] stays silent on "no
+ * update" and on failure because it runs unattended; a manual check has to distinguish them.
+ */
+sealed interface UpdateCheckResult {
+    /** A release newer than the installed version is available. */
+    data class Available(val update: AppUpdate) : UpdateCheckResult
+
+    /** The check succeeded and the installed version is the newest release. */
+    data object UpToDate : UpdateCheckResult
+
+    /** The check could not complete. The retry interval stays unchanged so a later attempt retries. */
+    data object Failed : UpdateCheckResult
+}
+
 class AppUpdateChecker(
     private val client: OkHttpClient,
     moshi: Moshi,
@@ -37,6 +52,24 @@ class AppUpdateChecker(
         AppUpdate(
             version = release.tagName.removePrefix("v"),
             releasePageUrl = RELEASE_PAGE_URL,
+        )
+    }
+
+    /**
+     * Runs a check the user asked for. It ignores the retry interval and reports the outcome
+     * explicitly so the UI can tell "already newest" apart from "check failed".
+     */
+    suspend fun checkNow(currentVersion: String): UpdateCheckResult = mutex.withLock {
+        val now = nowMillis()
+        val release = fetchLatestRelease() ?: return UpdateCheckResult.Failed
+        preferences.edit().putLong(KEY_LAST_SUCCESSFUL_CHECK, now).apply()
+        if (!isNewerVersion(release.tagName, currentVersion)) return UpdateCheckResult.UpToDate
+
+        UpdateCheckResult.Available(
+            AppUpdate(
+                version = release.tagName.removePrefix("v"),
+                releasePageUrl = RELEASE_PAGE_URL,
+            ),
         )
     }
 

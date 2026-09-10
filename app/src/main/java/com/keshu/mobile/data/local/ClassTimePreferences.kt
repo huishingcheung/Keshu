@@ -84,9 +84,23 @@ class ClassTimePreferences(private val preferences: SharedPreferences) {
     }
 }
 
+/**
+ * Resolves a section time for timeline decisions, clamping sections past the end of the profile
+ * onto its last period.
+ *
+ * A course can reference a section that the selected campus profile does not define, for example
+ * a 13th period while a 12-period profile is selected. Returning null there would leave the
+ * session without any end time, so it would never leave the "next class" slot.
+ */
+internal fun ClassTimeSettings.timelinePeriod(section: Int): ClassPeriodTime? {
+    val available = periods
+    if (available.isEmpty()) return null
+    return available.getOrElse(section - 1) { available.last() }
+}
+
 internal fun isValidClassPeriod(period: ClassPeriodTime): Boolean {
-    val start = period.start.toMinutes() ?: return false
-    val end = period.end.toMinutes() ?: return false
+    val start = period.start.toMinutesOfDay() ?: return false
+    val end = period.end.toMinutesOfDay() ?: return false
     return end > start
 }
 
@@ -103,7 +117,7 @@ internal fun decodePeriods(value: String?): List<ClassPeriodTime>? {
     return periods.takeIf { it.isNotEmpty() && it.all(::isValidClassPeriod) }
 }
 
-private fun String.toMinutes(): Int? {
+internal fun String.toMinutesOfDay(): Int? {
     val match = Regex("^(\\d{2}):(\\d{2})$").matchEntire(this) ?: return null
     val hour = match.groupValues[1].toInt()
     val minute = match.groupValues[2].toInt()

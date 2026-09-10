@@ -38,9 +38,15 @@ import androidx.compose.ui.unit.dp
 import com.keshu.mobile.data.local.ClassPeriodTime
 import com.keshu.mobile.data.local.ClassTimeProfile
 import com.keshu.mobile.data.local.ClassTimeSettings
+import com.keshu.mobile.data.local.HolidayEntry
 import com.keshu.mobile.data.local.entity.ClassSessionEntity
+import com.keshu.mobile.domain.DEFAULT_TEACHING_WEEKS
+import com.keshu.mobile.domain.explicitWeekNumbers
+import com.keshu.mobile.domain.weekNumbers
 import com.keshu.mobile.presentation.dashboard.DashboardUiState
 import com.keshu.mobile.presentation.components.*
+import java.time.DayOfWeek
+import java.time.LocalDate
 import kotlinx.coroutines.launch
 
 @Composable
@@ -48,10 +54,14 @@ internal fun SchedulePage(
     state: DashboardUiState,
     semesterStartDate: String,
     classTimeSettings: ClassTimeSettings,
+    holidayEntries: Map<LocalDate, HolidayEntry>,
+    today: LocalDate,
     showSetupNotice: Boolean,
     onSemesterStartDateChange: (String) -> Unit,
     onClassTimeProfileChange: (ClassTimeProfile) -> Unit,
     onCustomClassTimesSave: (List<ClassPeriodTime>) -> Unit,
+    onMakeupWeekdaySelected: (LocalDate, DayOfWeek) -> Unit,
+    onMakeupWeekdayCleared: (LocalDate) -> Unit,
     onSetupNoticeDismiss: () -> Unit,
     onSessionSave: (ClassSessionEntity) -> Unit,
 ) {
@@ -62,7 +72,7 @@ internal fun SchedulePage(
     var showCustomTimeEditor by remember { mutableStateOf(false) }
     val drawerState = rememberDrawerState(initialValue = androidx.compose.material3.DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    val currentWeek = remember(semesterStartDate) { weekFromSemesterStart(semesterStartDate) }
+    val currentWeek = remember(semesterStartDate, today) { weekFromSemesterStart(semesterStartDate, today) }
     val terms = remember(state.schedule.classSessions) {
         state.schedule.classSessions.map { it.term }.distinct().sortedDescending()
     }
@@ -125,6 +135,13 @@ internal fun SchedulePage(
                             settings = classTimeSettings,
                             onProfileSelected = onClassTimeProfileChange,
                             onEditCustom = { showCustomTimeEditor = true },
+                        )
+                    }
+                    item {
+                        HolidaySettingsCard(
+                            entries = holidayEntries.values.sortedBy { it.date },
+                            onMakeupWeekdaySelected = onMakeupWeekdaySelected,
+                            onMakeupWeekdayCleared = onMakeupWeekdayCleared,
                         )
                     }
                     if (terms.isNotEmpty()) {
@@ -194,6 +211,8 @@ internal fun SchedulePage(
                         selectedWeek = week,
                         semesterStartDate = semesterStartDate,
                         classTimeSettings = classTimeSettings,
+                        holidayEntries = holidayEntries,
+                        today = today,
                         onSessionClick = { selectedSession = it },
                     )
                 }
@@ -218,7 +237,18 @@ internal fun SchedulePage(
                 Button(onClick = onSetupNoticeDismiss) { Text("知道了") }
             },
             title = { Text("课表使用提示") },
-            text = { Text("使用前请先点击左上角菜单（☰），修改开学日期和课表时间。") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("使用前请先点击左上角菜单（☰），修改开学日期和课表时间。")
+                    Text(
+                        "放假和调休日期取自国务院节假日安排。补课具体上星期几的课由各校自行通知，" +
+                            "日期上标 * 的是应用按惯例给出的默认推测，请以学校通知为准，并在菜单的" +
+                            "“节假日与调休”里改成本校的安排。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
         )
     }
     if (showCustomTimeEditor) {
@@ -253,10 +283,12 @@ internal fun buildScheduleWeekIndex(
     currentWeek: Int?,
 ): ScheduleWeekIndex {
     val parsedSessions = sessions.map { it to it.weekNumbers() }
+    // Only explicit week ranges may lengthen the term. A `全周` course expands to every teachable
+    // week, which would otherwise stretch the picker to the maximum instead of the term's real size.
     val maxWeek = maxOf(
-        20,
+        DEFAULT_TEACHING_WEEKS,
         currentWeek ?: 1,
-        parsedSessions.maxOfOrNull { (_, weeks) -> weeks.maxOrNull() ?: 1 } ?: 1,
+        sessions.mapNotNull { it.explicitWeekNumbers()?.maxOrNull() }.maxOrNull() ?: 1,
     )
     val weeks = (1..maxWeek).toList()
     val buckets = weeks.associateWith { mutableListOf<ClassSessionEntity>() }

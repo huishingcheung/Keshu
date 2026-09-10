@@ -13,7 +13,15 @@ import com.keshu.mobile.MainActivity
 import com.keshu.mobile.R
 import com.keshu.mobile.data.local.ClassTimePreferences
 import com.keshu.mobile.data.local.ClassTimeSettings
+import com.keshu.mobile.data.local.DaySchedule
+import com.keshu.mobile.data.local.HolidayCalendar
+import com.keshu.mobile.data.local.HolidayEntry
+import com.keshu.mobile.data.local.HolidayPreferences
+import com.keshu.mobile.data.local.byDate
+import com.keshu.mobile.data.local.resolveDaySchedule
+import com.keshu.mobile.data.local.timetableWeekday
 import com.keshu.mobile.data.local.entity.ClassSessionEntity
+import com.keshu.mobile.domain.weekNumbers
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -40,18 +48,26 @@ class ScheduleWidgetReceiver : AppWidgetProvider() {
                 val allSessions = database.classScheduleDao().getAll()
                 val currentTerm = allSessions.firstOrNull()?.term
                 val currentWeek = currentWeek(context)
-                val classTimeSettings = ClassTimePreferences(
-                    context.getSharedPreferences("academic_settings", Context.MODE_PRIVATE),
-                ).load()
+                val academicSettings = context.getSharedPreferences("academic_settings", Context.MODE_PRIVATE)
+                val classTimeSettings = ClassTimePreferences(academicSettings).load()
+                val holidayEntries = HolidayCalendar.entries(
+                    HolidayPreferences(academicSettings).loadConfirmedMakeupWeekdays(),
+                ).byDate()
                 val today = LocalDate.now()
-                val sessions = allSessions
-                    .asSequence()
-                    .filter { currentTerm == null || it.term == currentTerm }
-                    .filter { it.dayOfWeek == today.dayOfWeek.value }
-                    .filter { currentWeek == null || currentWeek in it.weekNumbers() }
-                    .distinctBy { it.id }
-                    .take(3)
-                    .toList()
+                val todaySchedule = resolveDaySchedule(today, holidayEntries)
+                val todayWeekday = todaySchedule.timetableWeekday()
+                val sessions = todayWeekday
+                    ?.let { weekday ->
+                        allSessions
+                            .asSequence()
+                            .filter { currentTerm == null || it.term == currentTerm }
+                            .filter { it.dayOfWeek == weekday.value }
+                            .filter { currentWeek == null || currentWeek in it.weekNumbers() }
+                            .distinctBy { it.id }
+                            .take(3)
+                            .toList()
+                    }
+                    .orEmpty()
                 val exam = database.examDao().getUpcoming(limit = 1).firstOrNull()
                 appWidgetIds.forEach { appWidgetId ->
                     val minHeightDp = appWidgetManager.getAppWidgetOptions(appWidgetId)
@@ -65,7 +81,13 @@ class ScheduleWidgetReceiver : AppWidgetProvider() {
                     views.setOnClickPendingIntent(R.id.schedule_widget_title, openSchedule)
                     views.setTextViewText(
                         R.id.schedule_widget_date,
-                        today.format(DateTimeFormatter.ofPattern("M月d日 EEEE", Locale.CHINA)),
+                        buildString {
+                            append(today.format(DateTimeFormatter.ofPattern("M月d日 EEEE", Locale.CHINA)))
+                            todaySchedule.dateSuffix(holidayEntries[today])?.let {
+                                append(" · ")
+                                append(it)
+                            }
+                        },
                     )
                     bindSessions(
                         views = views,
@@ -159,21 +181,10 @@ class ScheduleWidgetReceiver : AppWidgetProvider() {
             .getString("semester_start_date", null)
             ?: return null
         val start = runCatching { LocalDate.parse(value) }.getOrNull() ?: return null
-        return (ChronoUnit.DAYS.between(start, LocalDate.now()) / 7L + 1L).toInt().coerceAtLeast(1)
-    }
-
-    private fun ClassSessionEntity.weekNumbers(): Set<Int> {
-        if (weeksText.isBlank() || weeksText.contains("全周")) return (1..30).toSet()
-        val values = linkedSetOf<Int>()
-        val oddOnly = weeksText.contains("单")
-        val evenOnly = weeksText.contains("双")
-        Regex("""(\d{1,2})(?:\s*[-~－至]\s*(\d{1,2}))?""").findAll(weeksText).forEach { match ->
-            val start = match.groupValues[1].toInt()
-            val end = match.groupValues.getOrNull(2)?.takeIf(String::isNotBlank)?.toInt() ?: start
-            values += (start.coerceAtMost(end)..start.coerceAtLeast(end))
-                .filter { (!oddOnly || it % 2 == 1) && (!evenOnly || it % 2 == 0) }
-        }
-        return if (values.isEmpty()) (1..30).toSet() else values
+        val firstWeekStart = start.minusDays((start.dayOfWeek.value - 1).toLong())
+        return (ChronoUnit.DAYS.between(firstWeekStart, LocalDate.now()) / 7L + 1L)
+            .toInt()
+            .coerceAtLeast(1)
     }
 
     private fun formatExamTime(millis: Long): String {
@@ -188,4 +199,20 @@ internal fun scheduleMaxCourseRowsForHeight(minHeightDp: Int, hasExamInfo: Boole
     minHeightDp < 240 -> 1
     minHeightDp < 285 -> 2
     else -> 3
+}
+
+private val widgetWeekdayNames = listOf("一", "二", "三", "四", "五", "六", "日")
+
+/**
+ * Extra context for the widget's date line: the holiday name, or the make-up weekday.
+ *
+ * A convention default is labelled as a guess, matching the timetable, because the make-up weekday
+ * is the school's decision rather than part of the State Council arrangement.
+ */
+internal fun DaySchedule.dateSuffix(entry: HolidayEntry?): String? = when (this) {
+    is DaySchedule.Holiday -> entry?.label ?: "放假"
+    is DaySchedule.MakeupUnconfirmed -> "调休上课，补课星期待确认"
+    is DaySchedule.Makeup ->
+        "补周" + widgetWeekdayNames[weekday.value - 1] + if (assumed) "（推测）" else ""
+    is DaySchedule.Normal -> null
 }

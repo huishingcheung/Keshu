@@ -66,6 +66,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.keshu.mobile.data.local.ClassPeriodTime
 import com.keshu.mobile.data.local.ClassTimeSettings
+import com.keshu.mobile.data.local.DaySchedule
+import com.keshu.mobile.data.local.HolidayEntry
+import com.keshu.mobile.data.local.resolveDaySchedule
+import com.keshu.mobile.data.local.timetableWeekday
 import com.keshu.mobile.data.local.entity.ClassSessionEntity
 import com.keshu.mobile.presentation.components.*
 import java.time.LocalDate
@@ -257,6 +261,8 @@ internal fun ScheduleWeekGrid(
     selectedWeek: Int?,
     semesterStartDate: String,
     classTimeSettings: ClassTimeSettings,
+    holidayEntries: Map<LocalDate, HolidayEntry>,
+    today: LocalDate,
     onSessionClick: (ClassSessionEntity) -> Unit,
 ) {
     val maxSection = remember(sessions, classTimeSettings) {
@@ -264,8 +270,10 @@ internal fun ScheduleWeekGrid(
     }
     val weekDates = remember(semesterStartDate, selectedWeek) { scheduleWeekDates(semesterStartDate, selectedWeek) }
     val sessionsByDay = remember(sessions) { sessions.groupBy { it.dayOfWeek } }
+    val daySchedules = remember(weekDates, holidayEntries) {
+        weekDates.map { resolveDaySchedule(it, holidayEntries) }
+    }
     val sectionHeight = 68.dp
-    val today = remember { LocalDate.now() }
     val verticalScroll = rememberScrollState()
     val gridColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.72f)
     BoxWithConstraints(
@@ -294,12 +302,21 @@ internal fun ScheduleWeekGrid(
                     )
                     Text("月", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                val holidayTint = MaterialTheme.colorScheme.error
+                val makeupTint = MaterialTheme.colorScheme.secondary
                 scheduleDayNames.forEachIndexed { index, name ->
                     val date = weekDates.getOrNull(index)
+                    val schedule = daySchedules.getOrNull(index)
                     ScheduleDayHeader(
                         dayName = name,
                         dayNumber = date?.dayOfMonth?.toString().orEmpty(),
                         selected = date == today,
+                        badge = schedule?.headerBadge()?.let { label ->
+                            DayHeaderBadge(
+                                label = label,
+                                tint = if (schedule is DaySchedule.Holiday) holidayTint else makeupTint,
+                            )
+                        },
                         width = dayWidth,
                     )
                 }
@@ -337,7 +354,9 @@ internal fun ScheduleWeekGrid(
                     ) {
                         scheduleDayNames.indices.forEach { dayIndex ->
                             Box(Modifier.width(dayWidth).requiredHeight(sectionHeight * maxSection)) {
-                                sessionsByDay[dayIndex + 1]
+                                daySchedules.getOrNull(dayIndex)
+                                    ?.timetableWeekday()
+                                    ?.let { sessionsByDay[it.value] }
                                     .orEmpty()
                                     .forEach { session ->
                                         ScheduleSessionBlock(
@@ -358,11 +377,28 @@ internal fun ScheduleWeekGrid(
 
 private val scheduleDayNames = listOf("一", "二", "三", "四", "五", "六", "日")
 
+/** A short timetable marker such as `休` or `补二`, with the tint that explains it. */
+internal data class DayHeaderBadge(val label: String, val tint: Color)
+
+/**
+ * The marker shown above a day column, or null on an ordinary day.
+ *
+ * `*` marks a make-up weekday that is only this app's convention default. `补?` marks a make-up day
+ * whose substituted weekday is unknown, which is a teaching day the user still has to confirm.
+ */
+internal fun DaySchedule.headerBadge(): String? = when (this) {
+    is DaySchedule.Holiday -> "休"
+    is DaySchedule.MakeupUnconfirmed -> "补?"
+    is DaySchedule.Makeup -> "补" + scheduleDayNames[weekday.value - 1] + if (assumed) "*" else ""
+    is DaySchedule.Normal -> null
+}
+
 @Composable
 internal fun ScheduleDayHeader(
     dayName: String,
     dayNumber: String,
     selected: Boolean,
+    badge: DayHeaderBadge?,
     width: androidx.compose.ui.unit.Dp,
 ) {
     Column(
@@ -389,6 +425,12 @@ internal fun ScheduleDayHeader(
                 )
             }
         }
+        Text(
+            badge?.label.orEmpty(),
+            style = MaterialTheme.typography.labelSmall,
+            color = badge?.tint ?: Color.Transparent,
+            maxLines = 1,
+        )
     }
 }
 

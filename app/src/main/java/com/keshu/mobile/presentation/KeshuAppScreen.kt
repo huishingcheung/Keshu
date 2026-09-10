@@ -21,13 +21,19 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -67,11 +73,16 @@ import com.keshu.mobile.data.AppContainer
 import com.keshu.mobile.R
 import com.keshu.mobile.BuildConfig
 import com.keshu.mobile.data.local.ClassTimePreferences
+import com.keshu.mobile.data.local.HolidayCalendar
+import com.keshu.mobile.data.local.HolidayPreferences
+import com.keshu.mobile.data.local.byDate
 import com.keshu.mobile.data.update.AppUpdate
+import com.keshu.mobile.data.update.UpdateCheckResult
 import com.keshu.mobile.presentation.dashboard.DashboardViewModel
 import com.keshu.mobile.presentation.dashboard.DashboardViewModelFactory
 import com.keshu.mobile.presentation.advisor.AdvisorPage
 import com.keshu.mobile.presentation.components.defaultSemesterStartDate
+import com.keshu.mobile.presentation.components.rememberCurrentDateTime
 import com.keshu.mobile.presentation.components.weekFromSemesterStart
 import com.keshu.mobile.presentation.credit.CreditPage
 import com.keshu.mobile.presentation.exam.ExamPage
@@ -79,8 +90,7 @@ import com.keshu.mobile.presentation.home.HomePage
 import com.keshu.mobile.presentation.schedule.SchedulePage
 import com.keshu.mobile.presentation.sync.ManualSyncActivity
 import com.keshu.mobile.widget.WidgetUpdateManager
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.launch
 
@@ -107,6 +117,13 @@ fun KeshuAppScreen(
     val coroutineScope = rememberCoroutineScope()
     val academicSettings = remember { context.getSharedPreferences("academic_settings", 0) }
     val classTimePreferences = remember { ClassTimePreferences(academicSettings) }
+    val holidayPreferences = remember { HolidayPreferences(academicSettings) }
+    var confirmedMakeupWeekdays by remember {
+        mutableStateOf(holidayPreferences.loadConfirmedMakeupWeekdays())
+    }
+    val holidayEntries = remember(confirmedMakeupWeekdays) {
+        HolidayCalendar.entries(confirmedMakeupWeekdays).byDate()
+    }
     var selectedTab by remember { mutableStateOf(MainTab.Home) }
     var semesterStartDate by remember {
         mutableStateOf(academicSettings.getString("semester_start_date", defaultSemesterStartDate()).orEmpty())
@@ -117,6 +134,9 @@ fun KeshuAppScreen(
     var classTimeSettings by remember { mutableStateOf(classTimePreferences.load()) }
     var showPortalPrivacyNotice by remember { mutableStateOf(false) }
     var availableUpdate by remember { mutableStateOf<AppUpdate?>(null) }
+    var showOverflowMenu by remember { mutableStateOf(false) }
+    var showAboutDialog by remember { mutableStateOf(false) }
+    var updateCheckDialog by remember { mutableStateOf<UpdateCheckDialog?>(null) }
     var showWelcomeGuide by remember {
         mutableStateOf(!academicSettings.getBoolean("welcome_guide_v1_acknowledged", false))
     }
@@ -139,8 +159,10 @@ fun KeshuAppScreen(
         ),
     )
     val state by viewModel.uiState.collectAsState()
-    val todayLabel = remember {
-        SimpleDateFormat("M月d日 EEEE", Locale.CHINA).format(Date())
+    val now by rememberCurrentDateTime()
+    val today = now.toLocalDate()
+    val todayLabel = remember(today) {
+        today.format(DateTimeFormatter.ofPattern("M月d日 EEEE", Locale.CHINA))
     }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
@@ -190,6 +212,49 @@ fun KeshuAppScreen(
                                     Text("同步")
                                 }
                             }
+                            Box {
+                                IconButton(onClick = { showOverflowMenu = true }) {
+                                    Icon(Icons.Default.MoreVert, contentDescription = "更多")
+                                }
+                                DropdownMenu(
+                                    expanded = showOverflowMenu,
+                                    onDismissRequest = { showOverflowMenu = false },
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("检查更新") },
+                                        leadingIcon = {
+                                            Icon(Icons.Default.Refresh, contentDescription = null)
+                                        },
+                                        onClick = {
+                                            showOverflowMenu = false
+                                            updateCheckDialog = UpdateCheckDialog.CHECKING
+                                            coroutineScope.launch {
+                                                val result = container.appUpdateChecker
+                                                    .checkNow(BuildConfig.VERSION_NAME)
+                                                updateCheckDialog = when (result) {
+                                                    is UpdateCheckResult.Available -> {
+                                                        availableUpdate = result.update
+                                                        null
+                                                    }
+
+                                                    UpdateCheckResult.UpToDate -> UpdateCheckDialog.UP_TO_DATE
+                                                    UpdateCheckResult.Failed -> UpdateCheckDialog.FAILED
+                                                }
+                                            }
+                                        },
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("关于课枢") },
+                                        leadingIcon = {
+                                            Icon(Icons.Default.Info, contentDescription = null)
+                                        },
+                                        onClick = {
+                                            showOverflowMenu = false
+                                            showAboutDialog = true
+                                        },
+                                    )
+                                }
+                            }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = MaterialTheme.colorScheme.surface,
@@ -212,8 +277,10 @@ fun KeshuAppScreen(
                         when (selectedTab) {
                             MainTab.Home -> HomePage(
                                 state = state,
-                                currentWeek = weekFromSemesterStart(semesterStartDate),
+                                now = now,
+                                currentWeek = weekFromSemesterStart(semesterStartDate, today),
                                 classTimeSettings = classTimeSettings,
+                                holidayEntries = holidayEntries,
                                 onAddTask = viewModel::addTask,
                                 onUpdateTask = viewModel::updateTask,
                                 onSetTaskDone = viewModel::setTaskDone,
@@ -228,6 +295,8 @@ fun KeshuAppScreen(
                                 state = state,
                                 semesterStartDate = semesterStartDate,
                                 classTimeSettings = classTimeSettings,
+                                holidayEntries = holidayEntries,
+                                today = today,
                                 showSetupNotice = showScheduleSetupNotice,
                                 onSemesterStartDateChange = {
                                     semesterStartDate = it
@@ -241,6 +310,16 @@ fun KeshuAppScreen(
                                 onCustomClassTimesSave = {
                                     classTimePreferences.saveCustom(it)
                                     classTimeSettings = classTimePreferences.load()
+                                    WidgetUpdateManager.requestUpdate(context)
+                                },
+                                onMakeupWeekdaySelected = { date, weekday ->
+                                    holidayPreferences.confirmMakeupWeekday(date, weekday)
+                                    confirmedMakeupWeekdays = holidayPreferences.loadConfirmedMakeupWeekdays()
+                                    WidgetUpdateManager.requestUpdate(context)
+                                },
+                                onMakeupWeekdayCleared = { date ->
+                                    holidayPreferences.clearMakeupWeekday(date)
+                                    confirmedMakeupWeekdays = holidayPreferences.loadConfirmedMakeupWeekdays()
                                     WidgetUpdateManager.requestUpdate(context)
                                 },
                                 onSetupNoticeDismiss = {
@@ -321,6 +400,70 @@ fun KeshuAppScreen(
             title = { Text("发现新版本 ${update.version}") },
             text = {
                 Text("当前版本为 ${BuildConfig.VERSION_NAME}。建议下载并安装最新版本，以获得功能改进和问题修复。")
+            },
+        )
+    }
+    if (updateCheckDialog != null && availableUpdate == null && !showWelcomeGuide) {
+        val dialog = requireNotNull(updateCheckDialog)
+        val checking = dialog == UpdateCheckDialog.CHECKING
+        AlertDialog(
+            onDismissRequest = { if (!checking) updateCheckDialog = null },
+            confirmButton = {
+                TextButton(onClick = { updateCheckDialog = null }, enabled = !checking) {
+                    Text(if (checking) "检查中…" else "知道了")
+                }
+            },
+            title = {
+                Text(
+                    when (dialog) {
+                        UpdateCheckDialog.CHECKING -> "正在检查更新"
+                        UpdateCheckDialog.UP_TO_DATE -> "已是最新版本"
+                        UpdateCheckDialog.FAILED -> "检查更新失败"
+                    },
+                )
+            },
+            text = {
+                Text(
+                    when (dialog) {
+                        UpdateCheckDialog.CHECKING -> "正在连接 GitHub 查询最新版本，请稍候。"
+                        UpdateCheckDialog.UP_TO_DATE ->
+                            "当前版本 ${BuildConfig.VERSION_NAME} 已是最新版本。"
+                        UpdateCheckDialog.FAILED ->
+                            "无法连接 GitHub 查询最新版本。请检查网络后重试。"
+                    },
+                )
+            },
+        )
+    }
+    if (showAboutDialog) {
+        AlertDialog(
+            onDismissRequest = { showAboutDialog = false },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showAboutDialog = false
+                        uriHandler.openUri(REPOSITORY_URL)
+                    },
+                ) { Text("访问项目主页") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAboutDialog = false }) { Text("关闭") }
+            },
+            title = { Text("关于课枢") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("版本 ${BuildConfig.VERSION_NAME}")
+                    Text(
+                        "课枢是一个独立项目，与暨南大学或任何高校没有隶属、授权或认可关系。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        "以 GPL-3.0-only 许可发布，分发修改后的版本需保持相同许可。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             },
         )
     }
@@ -468,3 +611,8 @@ private fun ScreenShell(constrainWidth: Boolean, content: @Composable () -> Unit
         }
     }
 }
+
+/** Progress of a user-triggered update check, from request to settled outcome. */
+private enum class UpdateCheckDialog { CHECKING, UP_TO_DATE, FAILED }
+
+private const val REPOSITORY_URL = "https://github.com/huishingcheung/Keshu"

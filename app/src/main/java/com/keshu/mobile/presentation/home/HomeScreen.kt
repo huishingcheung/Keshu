@@ -50,19 +50,28 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.keshu.mobile.data.local.ExamAvailability
 import com.keshu.mobile.data.local.ClassTimeSettings
+import com.keshu.mobile.data.local.DaySchedule
+import com.keshu.mobile.data.local.HolidayEntry
+import com.keshu.mobile.data.local.resolveDaySchedule
+import com.keshu.mobile.data.local.timelinePeriod
+import com.keshu.mobile.data.local.timetableWeekday
 import com.keshu.mobile.data.local.entity.TaskEntity
+import com.keshu.mobile.domain.occursInWeek
 import com.keshu.mobile.presentation.dashboard.DashboardUiState
 import com.keshu.mobile.presentation.components.*
 import com.keshu.mobile.presentation.exam.ExamCard
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Composable
 internal fun HomePage(
     state: DashboardUiState,
+    now: LocalDateTime,
     currentWeek: Int?,
     classTimeSettings: ClassTimeSettings,
+    holidayEntries: Map<LocalDate, HolidayEntry>,
     onAddTask: (String, Long, Boolean) -> Unit,
     onUpdateTask: (TaskEntity, String, Long, Boolean) -> Unit,
     onSetTaskDone: (TaskEntity, Boolean) -> Unit,
@@ -81,24 +90,50 @@ internal fun HomePage(
             onAddTaskRequestConsumed(addTaskRequestId)
         }
     }
-    val todayDayOfWeek = remember { LocalDate.now().dayOfWeek.value }
-    val todaySessions = remember(state.schedule.classSessions, currentWeek, todayDayOfWeek) {
-        state.schedule.classSessions
-            .filter { it.dayOfWeek == todayDayOfWeek && it.occursInWeek(currentWeek) }
-            .sortedBy { it.startSection }
+    val today = now.toLocalDate()
+    val todaySchedule = remember(today, holidayEntries) { resolveDaySchedule(today, holidayEntries) }
+    val todayEntry = holidayEntries[today]
+    val todayWeekday = todaySchedule.timetableWeekday()
+    val todaySessions = remember(state.schedule.classSessions, currentWeek, todayWeekday) {
+        todayWeekday
+            ?.let { weekday ->
+                state.schedule.classSessions
+                    .filter { it.dayOfWeek == weekday.value && it.occursInWeek(currentWeek) }
+                    .sortedBy { it.startSection }
+            }
+            .orEmpty()
     }
-    val nextSession = remember(todaySessions, classTimeSettings) {
-        val currentMinutes = java.time.LocalTime.now().let { it.hour * 60 + it.minute }
-        todaySessions.firstOrNull { session ->
-            classTimeSettings.period(session.endSection)
-                ?.end
-                ?.split(":")
-                ?.let { parts -> parts[0].toInt() * 60 + parts[1].toInt() >= currentMinutes }
-                ?: true
+    val nowMinutes = now.hour * 60 + now.minute
+    val coursePlan = remember(todaySessions, classTimeSettings, nowMinutes) {
+        resolveTodayCourses(todaySessions, classTimeSettings, nowMinutes)
+    }
+    val highlightSession = coursePlan.highlight
+    val highlightCaption = remember(
+        highlightSession,
+        classTimeSettings,
+        coursePlan.inProgressRemainingMinutes,
+    ) {
+        highlightSession?.let { session ->
+            val start = classTimeSettings.timelinePeriod(session.startSection)?.start
+            val end = classTimeSettings.timelinePeriod(session.endSection)?.end
+            buildList {
+                coursePlan.inProgressRemainingMinutes?.let { add("距下课还有 $it 分钟") }
+                if (!start.isNullOrBlank() && !end.isNullOrBlank()) add("$start–$end")
+                if (session.location.isNotBlank()) add(session.location)
+            }.joinToString(" · ")
+        } ?: "可以安排复习、运动或休息"
+    }
+    val laterSessions = coursePlan.remaining
+    val remainingSubtitle = when (val schedule = todaySchedule) {
+        is DaySchedule.Holiday -> "${todayEntry?.label ?: "今天"}放假"
+        is DaySchedule.MakeupUnconfirmed -> "调休上课 · 待确认补课星期"
+        is DaySchedule.Makeup -> buildString {
+            append("调休上课 · 补")
+            append(schedule.weekday.chineseName())
+            if (schedule.assumed) append("（推测）")
+            currentWeek?.let { append(" · 第 $it 周") }
         }
-    }
-    val laterSessions = remember(todaySessions, nextSession) {
-        todaySessions.filterNot { it.id == nextSession?.id }
+        is DaySchedule.Normal -> currentWeek?.let { "第 $it 周" } ?: "按当天显示"
     }
     val pendingTaskCount = remember(state.schedule.tasks) { state.schedule.tasks.count { !it.done } }
     LazyColumn(
@@ -107,21 +142,35 @@ internal fun HomePage(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
             item {
+                val isHoliday = todaySchedule is DaySchedule.Holiday
+                val makeupUnconfirmed = todaySchedule is DaySchedule.MakeupUnconfirmed
                 HeroCard(
-                    title = if (nextSession == null) "今日安排" else "下一节课",
-                    value = nextSession?.courseName ?: "今天没有更多课程",
+                    title = when {
+                        isHoliday -> "放假"
+                        makeupUnconfirmed -> "调休上课"
+                        coursePlan.inProgress != null -> "正在上课"
+                        coursePlan.next != null -> "下一节课"
+                        else -> "今日安排"
+                    },
+                    value = when {
+                        isHoliday -> todayEntry?.label ?: "今天放假"
+                        makeupUnconfirmed -> "待确认补哪天的课"
+                        else -> highlightSession?.courseName ?: "今天没有更多课程"
+                    },
                     unit = "",
-                    caption = nextSession?.let { session ->
-                        val start = classTimeSettings.period(session.startSection)?.start.orEmpty()
-                        val end = classTimeSettings.period(session.endSection)?.end.orEmpty()
-                        listOf("$start–$end".trim('–'), session.location)
-                            .filter { it.isNotBlank() }
-                            .joinToString(" · ")
-                    } ?: "可以安排复习、运动或休息",
-                    progress = if (nextSession == null) 0f else 1f,
+                    caption = when {
+                        isHoliday -> "今天没有课程安排"
+                        makeupUnconfirmed -> "请在课表左上角菜单中确认补课星期"
+                        else -> highlightCaption
+                    },
+                    progress = when {
+                        isHoliday || makeupUnconfirmed -> 0f
+                        else -> coursePlan.inProgressElapsedFraction
+                            ?: if (highlightSession == null) 0f else 1f
+                    },
                 )
             }
-            item { SectionHeader("今日剩余课程", currentWeek?.let { "第 $it 周" } ?: "按当天显示") }
+            item { SectionHeader("今日剩余课程", remainingSubtitle) }
             if (laterSessions.isEmpty()) {
                 item { EmptyCard("后面没有课程", "今天剩余时间可以自由安排。") }
             } else {

@@ -35,6 +35,7 @@ import com.keshu.mobile.data.local.entity.CourseStatus
 import com.keshu.mobile.domain.model.CreditTree
 import com.keshu.mobile.domain.model.LargeGroupProgress
 import java.text.SimpleDateFormat
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -185,15 +186,29 @@ internal fun Long.formatDate(): String {
     return SimpleDateFormat("MM月dd日", Locale.CHINA).format(Date(this))
 }
 
-internal fun defaultSemesterStartDate(): String {
-    val today = LocalDate.now()
-    val year = today.year
-    return if (today.monthValue >= 8) "$year-09-01" else "$year-03-01"
+/** Short Chinese weekday names, used wherever the app must not inherit the device locale. */
+internal val chineseWeekdayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
+
+internal fun DayOfWeek.chineseName(): String = chineseWeekdayNames[value - 1]
+
+internal fun defaultSemesterStartDate(today: LocalDate = LocalDate.now()): String {
+    val month = if (today.monthValue >= 8) 9 else 3
+    // Teaching weeks run Monday to Sunday, and the timetable grid lays its columns out that way,
+    // so the default start date is the first Monday of the month. For September 2026 that is
+    // 2026-09-07, which is the first teaching day of the JNU 2026 fall semester.
+    var date = LocalDate.of(today.year, month, 1)
+    while (date.dayOfWeek != DayOfWeek.MONDAY) {
+        date = date.plusDays(1)
+    }
+    return date.toString()
 }
 
-internal fun weekFromSemesterStart(value: String): Int? {
+internal fun weekFromSemesterStart(value: String, today: LocalDate = LocalDate.now()): Int? {
     val start = runCatching { LocalDate.parse(value.trim(), DateTimeFormatter.ISO_LOCAL_DATE) }.getOrNull() ?: return null
-    val days = ChronoUnit.DAYS.between(start, LocalDate.now())
+    // Weeks are counted Monday to Sunday: the first week is the one containing the start date, so a
+    // new week begins at the next Monday even when the semester starts mid-week or on a Sunday.
+    val firstWeekStart = start.minusDays((start.dayOfWeek.value - 1).toLong())
+    val days = ChronoUnit.DAYS.between(firstWeekStart, today)
     return if (days < 0) 1 else (days / 7 + 1).toInt().coerceAtLeast(1)
 }
 
@@ -205,30 +220,6 @@ internal fun scheduleWeekDates(semesterStartDate: String, selectedWeek: Int?): L
         .plusWeeks(((selectedWeek ?: 1) - 1).toLong())
         .minusDays((start.dayOfWeek.value - 1).toLong())
     return (0..6).map { weekStart.plusDays(it.toLong()) }
-}
-
-internal fun ClassSessionEntity.occursInWeek(week: Int?): Boolean {
-    return week == null || week in weekNumbers()
-}
-
-internal fun ClassSessionEntity.weekNumbers(): List<Int> {
-    val text = weeksText.trim()
-    if (text.isBlank() || text.contains("全周")) return (1..20).toList()
-    val ranges = Regex("""(\d{1,2})(?:\s*[-~－至]\s*(\d{1,2}))?""").findAll(text).toList()
-    if (ranges.isEmpty()) return (1..20).toList()
-    val oddOnly = text.contains("单")
-    val evenOnly = text.contains("双")
-    return ranges
-        .flatMap { match ->
-            val start = match.groupValues[1].toInt()
-            val end = match.groupValues.getOrNull(2)?.takeIf { it.isNotBlank() }?.toInt() ?: start
-            (start.coerceAtMost(end)..start.coerceAtLeast(end)).toList()
-        }
-        .filter { it in 1..30 }
-        .filter { !oddOnly || it % 2 == 1 }
-        .filter { !evenOnly || it % 2 == 0 }
-        .distinct()
-        .sorted()
 }
 
 internal fun CreditTree.allCourses(): List<CourseEntity> {
