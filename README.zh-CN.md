@@ -4,7 +4,7 @@
 
 [![Android CI](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml/badge.svg)](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml)
 [![许可证：GPL-3.0-only](https://img.shields.io/badge/许可证-GPL--3.0--only-blue.svg)](LICENSE)
-[![下载](https://img.shields.io/badge/下载-v0.4.4%20预览版-155EEF?logo=android&logoColor=white)](https://github.com/huishingcheung/Keshu/releases/download/v0.4.4/Keshu-v0.4.4-preview.apk)
+[![下载](https://img.shields.io/badge/下载-v0.4.5%20预览版-155EEF?logo=android&logoColor=white)](https://github.com/huishingcheung/Keshu/releases/download/v0.4.5/Keshu-v0.4.5-preview.apk)
 
 **围绕今天，整理好课程、学分、待办与考试。**
 
@@ -15,7 +15,7 @@
 
 ## 安装
 
-[下载课枢 v0.4.4 预览版](https://github.com/huishingcheung/Keshu/releases/download/v0.4.4/Keshu-v0.4.4-preview.apk) · [查看全部版本](https://github.com/huishingcheung/Keshu/releases)
+[下载课枢 v0.4.5 预览版](https://github.com/huishingcheung/Keshu/releases/download/v0.4.5/Keshu-v0.4.5-preview.apk) · [查看全部版本](https://github.com/huishingcheung/Keshu/releases)
 
 课枢需要 Android 8.0 或更高版本。APK 目前仅通过 GitHub Releases 直接分发，尚未上架应用商店。
 

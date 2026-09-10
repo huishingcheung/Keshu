@@ -3,6 +3,7 @@ package com.keshu.mobile.data.update
 import android.content.SharedPreferences
 import com.squareup.moshi.Json
 import com.squareup.moshi.Moshi
+import java.net.URI
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -13,6 +14,9 @@ import okhttp3.Request
 
 data class AppUpdate(
     val version: String,
+    /** Primary target for the download action. */
+    val downloadUrl: String,
+    /** The GitHub Release page, kept as a secondary reference. */
     val releasePageUrl: String,
 )
 
@@ -37,6 +41,7 @@ class AppUpdateChecker(
     private val preferences: SharedPreferences,
     private val nowMillis: () -> Long = System::currentTimeMillis,
 ) {
+    private val manifestAdapter = moshi.adapter(UpdateManifest::class.java)
     private val releaseAdapter = moshi.adapter(GitHubRelease::class.java)
     private val mutex = Mutex()
 
@@ -45,14 +50,11 @@ class AppUpdateChecker(
         val lastSuccessfulCheck = preferences.getLong(KEY_LAST_SUCCESSFUL_CHECK, 0L)
         if (!isUpdateCheckDue(now, lastSuccessfulCheck)) return null
 
-        val release = fetchLatestRelease() ?: return null
+        val release = fetchRelease() ?: return null
         preferences.edit().putLong(KEY_LAST_SUCCESSFUL_CHECK, now).apply()
-        if (!isNewerVersion(release.tagName, currentVersion)) return null
+        if (!isNewerVersion(release.version, currentVersion)) return null
 
-        AppUpdate(
-            version = release.tagName.removePrefix("v"),
-            releasePageUrl = RELEASE_PAGE_URL,
-        )
+        release.toAppUpdate()
     }
 
     /**
@@ -61,54 +63,140 @@ class AppUpdateChecker(
      */
     suspend fun checkNow(currentVersion: String): UpdateCheckResult = mutex.withLock {
         val now = nowMillis()
-        val release = fetchLatestRelease() ?: return UpdateCheckResult.Failed
+        val release = fetchRelease() ?: return UpdateCheckResult.Failed
         preferences.edit().putLong(KEY_LAST_SUCCESSFUL_CHECK, now).apply()
-        if (!isNewerVersion(release.tagName, currentVersion)) return UpdateCheckResult.UpToDate
+        if (!isNewerVersion(release.version, currentVersion)) return UpdateCheckResult.UpToDate
 
-        UpdateCheckResult.Available(
-            AppUpdate(
-                version = release.tagName.removePrefix("v"),
-                releasePageUrl = RELEASE_PAGE_URL,
-            ),
-        )
+        UpdateCheckResult.Available(release.toAppUpdate())
     }
 
-    private suspend fun fetchLatestRelease(): GitHubRelease? = withContext(Dispatchers.IO) {
+    /**
+     * Asks the project site first. `api.github.com` is unreachable on many mainland networks while
+     * the site the APK is already downloaded from is not, and the manifest also names that mirror so
+     * the download action can avoid `github.com`. The GitHub API stays as a fallback for wherever
+     * the site cannot be reached, and for a deployment that predates the manifest.
+     */
+    private suspend fun fetchRelease(): ReleaseInfo? = fetchManifest() ?: fetchGitHubRelease()
+
+    private suspend fun fetchManifest(): ReleaseInfo? = withContext(Dispatchers.IO) {
         val request = Request.Builder()
-            .url(LATEST_RELEASE_API_URL)
-            .header("Accept", "application/vnd.github+json")
-            .header("X-GitHub-Api-Version", "2022-11-28")
-            .header("User-Agent", "Keshu-Android")
+            .url(MANIFEST_URL)
+            .header("Accept", "application/json")
+            .header("User-Agent", USER_AGENT)
             .get()
             .build()
         runCatching {
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) return@use null
-                response.body?.string()?.let(releaseAdapter::fromJson)
+                response.body?.string()
+                    ?.let(manifestAdapter::fromJson)
+                    ?.toReleaseInfo(baseUrl = MANIFEST_URL)
+            }
+        }.getOrNull()
+    }
+
+    private suspend fun fetchGitHubRelease(): ReleaseInfo? = withContext(Dispatchers.IO) {
+        val request = Request.Builder()
+            .url(LATEST_RELEASE_API_URL)
+            .header("Accept", "application/vnd.github+json")
+            .header("X-GitHub-Api-Version", "2022-11-28")
+            .header("User-Agent", USER_AGENT)
+            .get()
+            .build()
+        runCatching {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return@use null
+                response.body?.string()
+                    ?.let(releaseAdapter::fromJson)
+                    ?.toReleaseInfo()
             }
         }.getOrNull()
     }
 
     companion object {
         private const val KEY_LAST_SUCCESSFUL_CHECK = "last_successful_update_check"
+        private const val USER_AGENT = "Keshu-Android"
+
+        /** Published by the Pages deployment on every release. */
+        const val MANIFEST_URL = "https://huishingcheung.github.io/Keshu/latest.json"
+
+        internal const val DEFAULT_RELEASE_PAGE_URL =
+            "https://github.com/huishingcheung/Keshu/releases/latest"
+
         private const val LATEST_RELEASE_API_URL =
             "https://api.github.com/repos/huishingcheung/Keshu/releases/latest"
-        private const val RELEASE_PAGE_URL =
-            "https://github.com/huishingcheung/Keshu/releases/latest"
     }
 }
+
+/**
+ * The manifest the project site publishes at [AppUpdateChecker.MANIFEST_URL] on every deployment.
+ * Paths in it are relative so the manifest survives a change of domain.
+ */
+internal data class UpdateManifest(
+    @Json(name = "version") val version: String? = null,
+    @Json(name = "apk") val apk: String? = null,
+    @Json(name = "releasePage") val releasePage: String? = null,
+)
+
+/** A release as reported by whichever source answered. */
+internal data class ReleaseInfo(
+    val version: String,
+    val downloadUrl: String?,
+    val releasePageUrl: String?,
+)
+
+internal fun UpdateManifest.toReleaseInfo(baseUrl: String): ReleaseInfo? {
+    val resolvedVersion = version?.trim()?.removePrefix("v")?.takeIf(String::isNotBlank) ?: return null
+    return ReleaseInfo(
+        version = resolvedVersion,
+        downloadUrl = apk?.trim()?.takeIf(String::isNotBlank)?.let { resolveAgainst(baseUrl, it) },
+        releasePageUrl = releasePage?.trim()?.takeIf(String::isNotBlank),
+    )
+}
+
+/** Resolves a possibly relative manifest path against the manifest's own URL. */
+internal fun resolveAgainst(baseUrl: String, path: String): String? {
+    return runCatching { URI(baseUrl).resolve(path).toString() }.getOrNull()
+}
+
+/** Prefers the mirrored APK, and falls back to the Release page when no mirror was named. */
+internal fun ReleaseInfo.toAppUpdate(): AppUpdate {
+    val page = releasePageUrl ?: AppUpdateChecker.DEFAULT_RELEASE_PAGE_URL
+    return AppUpdate(
+        version = version,
+        downloadUrl = downloadUrl ?: page,
+        releasePageUrl = page,
+    )
+}
+
+internal data class GitHubRelease(
+    @Json(name = "tag_name") val tagName: String? = null,
+    @Json(name = "html_url") val htmlUrl: String? = null,
+    @Json(name = "assets") val assets: List<GitHubAsset> = emptyList(),
+) {
+    fun toReleaseInfo(): ReleaseInfo? {
+        val resolvedVersion = tagName?.trim()?.removePrefix("v")?.takeIf(String::isNotBlank) ?: return null
+        return ReleaseInfo(
+            version = resolvedVersion,
+            downloadUrl = assets
+                .firstOrNull { it.browserDownloadUrl.endsWith(".apk", ignoreCase = true) }
+                ?.browserDownloadUrl,
+            releasePageUrl = htmlUrl,
+        )
+    }
+}
+
+internal data class GitHubAsset(
+    @Json(name = "browser_download_url") val browserDownloadUrl: String,
+)
 
 internal fun isUpdateCheckDue(nowMillis: Long, lastSuccessfulCheckMillis: Long): Boolean {
     if (lastSuccessfulCheckMillis <= 0L || nowMillis < lastSuccessfulCheckMillis) return true
     return nowMillis - lastSuccessfulCheckMillis >= TimeUnit.DAYS.toMillis(3)
 }
 
-internal data class GitHubRelease(
-    @Json(name = "tag_name") val tagName: String,
-)
-
-internal fun isNewerVersion(latestTag: String, currentVersion: String): Boolean {
-    val latest = latestTag.toVersionParts() ?: return false
+internal fun isNewerVersion(latestVersion: String, currentVersion: String): Boolean {
+    val latest = latestVersion.toVersionParts() ?: return false
     val current = currentVersion.toVersionParts() ?: return false
     val size = maxOf(latest.size, current.size)
     repeat(size) { index ->

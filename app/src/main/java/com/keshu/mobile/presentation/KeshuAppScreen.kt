@@ -388,7 +388,7 @@ fun KeshuAppScreen(
                 Button(
                     onClick = {
                         availableUpdate = null
-                        uriHandler.openUri(update.releasePageUrl)
+                        uriHandler.openUri(update.downloadUrl)
                     },
                 ) {
                     Text("前往下载")
@@ -399,7 +399,14 @@ fun KeshuAppScreen(
             },
             title = { Text("发现新版本 ${update.version}") },
             text = {
-                Text("当前版本为 ${BuildConfig.VERSION_NAME}。建议下载并安装最新版本，以获得功能改进和问题修复。")
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("当前版本为 ${BuildConfig.VERSION_NAME}。建议下载并安装最新版本，以获得功能改进和问题修复。")
+                    Text(
+                        "安装包来自课枢项目网站，可同时核对 SHA-256 校验文件。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             },
         )
     }
