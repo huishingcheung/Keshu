@@ -17,12 +17,11 @@ private const val MILLIS_PER_MINUTE = 60_000L
 /**
  * Emits the current local date and time and refreshes it on every minute boundary.
  *
- * The home screen decides which class is running and the schedule highlights today's column, so
- * both have to follow the clock while the screen stays open. Reading the clock inside `remember`
- * instead froze the value until unrelated data changed, which kept finished classes on screen.
+ * The home screen decides which class is running and the schedule highlights today's column, so both
+ * have to follow the clock while the screen stays open. Reading the clock inside `remember` froze
+ * the value until unrelated data changed.
  *
- * The effect restarts on every resume: a process stopped in the background may not run its pending
- * delay until later, and refreshing immediately keeps the first frame after resume correct.
+ * The effect restarts on every resume so the first frame after a pause is correct.
  */
 @Composable
 internal fun rememberCurrentDateTime(): State<LocalDateTime> {

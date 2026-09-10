@@ -37,9 +37,9 @@ fun ClassSessionEntity.explicitWeekNumbers(): Set<Int>? {
 /**
  * The teaching weeks a session runs in.
  *
- * An unreadable or open-ended value means every week: showing a course in weeks it does not meet is
- * less harmful than hiding it from the weeks it does, and the timetable previously dropped a `全周`
- * course from week 21 onward because its fallback stopped at week 20.
+ * An unreadable or open-ended value means every week: showing a course in a week it does not meet is
+ * less harmful than hiding it from a week it does. The fallback reaches [MAX_TEACHING_WEEKS] because
+ * the timetable once dropped an open-ended course from week 21 onward.
  */
 fun ClassSessionEntity.weekNumbers(): Set<Int> {
     return explicitWeekNumbers() ?: (1..MAX_TEACHING_WEEKS).toSet()

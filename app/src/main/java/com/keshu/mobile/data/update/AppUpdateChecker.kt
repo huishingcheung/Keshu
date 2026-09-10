@@ -56,8 +56,8 @@ class AppUpdateChecker(
     }
 
     /**
-     * Runs a check the user asked for. It ignores the retry interval and reports the outcome
-     * explicitly so the UI can tell "already newest" apart from "check failed".
+     * Runs a check on demand. It ignores the retry interval and reports the outcome explicitly so
+     * the UI can tell "already newest" apart from "check failed".
      */
     suspend fun checkNow(currentVersion: String): UpdateCheckResult = mutex.withLock {
         val now = nowMillis()

@@ -54,18 +54,16 @@ sealed interface DaySchedule {
 object HolidayCalendar {
     /**
      * Source of the arrangement dates: 《国务院办公厅关于2026年部分节假日安排的通知》,
-     * 国办发明电〔2025〕7号. The notice fixes the holiday and make-up dates but says nothing about the
-     * weekday a make-up day replaces.
+     * 国办发明电〔2025〕7号. The notice fixes the holiday and make-up dates but says nothing about
+     * the weekday a make-up day replaces, so the two make-up weekdays below are convention defaults
+     * marked [HolidayEntry.makeupIsAssumed] rather than a school arrangement.
      *
-     * This table covers the JNU 2026 fall semester, whose first teaching day is 2026-09-07. It is
-     * deliberately data rather than logic so a later arrangement can replace it.
+     * They make up the last working days the holiday displaced, which leaves 10月6日 (Tuesday) and
+     * 10月7日 (Wednesday). Schools do not agree on this mapping, and a stored choice replaces the
+     * default.
      *
-     * The two make-up weekdays below are **convention defaults, not a school arrangement**, and are
-     * marked assumed. They follow the pattern of making up the last working days the holiday
-     * displaced: the seven-day holiday consumes 10月1日, 2日, 5日, 6日 and 7日, so the last two are
-     * 10月6日 (Tuesday) and 10月7日 (Wednesday). JNU's own 2023 notice followed the same rule, and
-     * Yancheng Institute of Technology reached the same two weekdays for 2026, while Hubei
-     * University chose Monday and Thursday instead. The user can change both.
+     * The table covers the 2026 fall semester, whose first teaching day is 2026-09-07, and is data
+     * rather than logic so a later arrangement can replace it.
      */
     const val ARRANGEMENT_NOTICE = "国办发明电〔2025〕7号"
 

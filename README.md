@@ -4,7 +4,7 @@
 
 [![Android CI](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml/badge.svg)](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml)
 [![License: GPL-3.0-only](https://img.shields.io/badge/License-GPL--3.0--only-blue.svg)](LICENSE)
-[![Download](https://img.shields.io/badge/Download-v0.4.2%20Preview-155EEF?logo=android&logoColor=white)](https://github.com/huishingcheung/Keshu/releases/download/v0.4.2/Keshu-v0.4.2-preview.apk)
+[![Download](https://img.shields.io/badge/Download-v0.4.3%20Preview-155EEF?logo=android&logoColor=white)](https://github.com/huishingcheung/Keshu/releases/download/v0.4.3/Keshu-v0.4.3-preview.apk)
 
 **Classes, credits, tasks, and exams—organized around today.**
 
@@ -15,7 +15,7 @@ Keshu is a local-first Android academic companion. It imports records from a sup
 
 ## Install
 
-[Download Keshu v0.4.2 Preview](https://github.com/huishingcheung/Keshu/releases/download/v0.4.2/Keshu-v0.4.2-preview.apk) · [View all releases](https://github.com/huishingcheung/Keshu/releases)
+[Download Keshu v0.4.3 Preview](https://github.com/huishingcheung/Keshu/releases/download/v0.4.3/Keshu-v0.4.3-preview.apk) · [View all releases](https://github.com/huishingcheung/Keshu/releases)
 
 Keshu requires Android 8.0 or later. The APK is distributed directly through GitHub Releases and is not currently available from an app store.
 
@@ -25,19 +25,21 @@ Keshu requires Android 8.0 or later. The APK is distributed directly through Git
 2. Tap **Sync** in the top-right corner of Today and review the import notice.
 3. Sign in through the university's official portal page.
 4. Select **One-tap sync** and keep the sync screen open until each dataset reports a result.
-5. Review the imported timetable, then set the semester start date and campus class times from the timetable menu.
+5. Review the imported timetable, then set the semester start date, campus class times, and any make-up class weekday from the timetable menu.
 
 Always verify important deadlines, rooms, and exam arrangements through an official university channel.
 
 ## Features
 
-- A Today view for the next class, remaining classes, tasks, and exam status
+- A Today view that follows the clock: the class running now, the next class, what is left today, tasks, and exam status
+- Holiday and make-up class days from the semester arrangement, with an editable and clearly marked make-up weekday
 - Curriculum and credit progress with an optional in-progress credit projection that updates the full credit tree
-- A swipeable weekly timetable with campus time presets, custom class times, and local corrections
+- A swipeable weekly timetable that marks holidays and make-up days, with campus time presets, custom class times, and local corrections
 - Tasks with optional notification reminders
 - Exam arrangements and reminders when the university makes them available
 - Optional DeepSeek-powered course-planning suggestions with an in-app API key guide
 - Light home-screen widgets for schedules, exams, and tasks
+- A manual release update check from the top app bar
 
 When exam viewing is closed, Keshu shows the university's published viewing window instead of reporting zero exams or failing the entire import.
 
@@ -96,6 +98,8 @@ Keshu is preview software. Only one university data source is currently availabl
 ## Help and contributing
 
 Use [GitHub Issues](https://github.com/huishingcheung/Keshu/issues) for reproducible bugs and focused feature requests. Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a substantial change, and remove all personal or authentication data from portal-related material.
+
+Keshu is maintained by [@huishingcheung](https://github.com/huishingcheung).
 
 ## License
 

@@ -4,7 +4,7 @@
 
 [![Android CI](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml/badge.svg)](https://github.com/huishingcheung/Keshu/actions/workflows/android.yml)
 [![许可证：GPL-3.0-only](https://img.shields.io/badge/许可证-GPL--3.0--only-blue.svg)](LICENSE)
-[![下载](https://img.shields.io/badge/下载-v0.4.2%20预览版-155EEF?logo=android&logoColor=white)](https://github.com/huishingcheung/Keshu/releases/download/v0.4.2/Keshu-v0.4.2-preview.apk)
+[![下载](https://img.shields.io/badge/下载-v0.4.3%20预览版-155EEF?logo=android&logoColor=white)](https://github.com/huishingcheung/Keshu/releases/download/v0.4.3/Keshu-v0.4.3-preview.apk)
 
 **围绕今天，整理好课程、学分、待办与考试。**
 
@@ -15,7 +15,7 @@
 
 ## 安装
 
-[下载课枢 v0.4.2 预览版](https://github.com/huishingcheung/Keshu/releases/download/v0.4.2/Keshu-v0.4.2-preview.apk) · [查看全部版本](https://github.com/huishingcheung/Keshu/releases)
+[下载课枢 v0.4.3 预览版](https://github.com/huishingcheung/Keshu/releases/download/v0.4.3/Keshu-v0.4.3-preview.apk) · [查看全部版本](https://github.com/huishingcheung/Keshu/releases)
 
 课枢需要 Android 8.0 或更高版本。APK 目前仅通过 GitHub Releases 直接分发，尚未上架应用商店。
 
@@ -25,19 +25,21 @@
 2. 点击“今天”页面右上角的**同步**，阅读导入注意事项。
 3. 在学校官方教务页面完成登录。
 4. 选择**一键同步**，保持同步页面开启，直至各项数据分别显示结果。
-5. 检查导入后的课表，并从课表侧栏设置开学日期与校区上课时间。
+5. 检查导入后的课表，并从课表侧栏设置开学日期、校区上课时间，以及调休日补哪天的课。
 
 重要截止日期、教室和考试安排请始终通过学校官方渠道复核。
 
 ## 功能
 
-- 在“今天”查看下一节课、剩余课程、待办和考试状态
+- 在“今天”查看正在上的课、下一节课、今日剩余课程、待办和考试状态，并随时钟推进
+- 内置本学期节假日与调休安排；调休日补哪天的课可自行修改，未确认的默认值会明确标注
 - 查看培养方案与学分进度；预测模式会将待修和在修学分同步反映到完整学分树
-- 滑动切换周课表，选择校区课时预设、自定义上课时间，并在本地修正课程安排
+- 滑动切换周课表，自动标注放假与调休，并可选择校区课时预设、自定义上课时间、在本地修正课程安排
 - 创建待办并选择是否启用通知提醒
 - 在学校开放查询时导入考试安排并设置提醒
 - 按需使用 DeepSeek 生成选课建议，并通过应用内教程获取 API Key
 - 使用浅色课表、考试与待办桌面小组件
+- 从顶栏菜单手动检查新版本
 
 学校尚未开放考试查询时，课枢会显示教务系统公布的可查看时间，而不是报告零场考试或让整次导入失败。
 
@@ -96,6 +98,8 @@ flowchart LR
 ## 获取帮助与参与贡献
 
 请通过 [GitHub Issues](https://github.com/huishingcheung/Keshu/issues) 提交可复现问题和明确需求。准备较大修改前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)，教务相关材料必须移除全部个人与认证数据。
+
+课枢由 [@huishingcheung](https://github.com/huishingcheung) 维护。
 
 ## 许可证
 
