@@ -32,9 +32,9 @@ jobs:
       - name: Prepare same-origin release downloads
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: v0.4.4
-          APK_FILE: Keshu-v0.4.4-preview.apk
-          APK_SHA256: 757e81e7bbb2ecfbbc63fdd59aaba10c0d3b7028494bd263b7c12fb9acd6fc41
+          RELEASE_TAG: v0.4.5
+          APK_FILE: Keshu-v0.4.5-preview.apk
+          APK_SHA256: 87eda782cba64c8e17a4a2177b362ab083aed3874a1ffe222caee4fc9875101d
         run: |
           mkdir -p site/downloads
           gh release download "$RELEASE_TAG" \
@@ -44,6 +44,13 @@ jobs:
           cd site/downloads
           sha256sum --check "$APK_FILE.sha256"
           printf '%s  %s\n' "$APK_SHA256" "$APK_FILE" | sha256sum --check --strict -
+          cd ..
+          # The app reads this instead of api.github.com, which is unreachable on many mainland
+          # networks. Paths stay relative so the manifest survives a change of domain.
+          printf '{\n  "version": "%s",\n  "apk": "downloads/%s",\n  "sha256": "%s",\n  "releasePage": "https://github.com/%s/releases/tag/%s"\n}\n' \
+            "${RELEASE_TAG#v}" "$APK_FILE" "$APK_SHA256" "$GITHUB_REPOSITORY" "$RELEASE_TAG" \
+            > latest.json
+          cat latest.json
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
