@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
@@ -287,7 +288,7 @@ internal fun ScheduleWeekGrid(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(76.dp)
+                    .heightIn(min = 76.dp)
                     .background(MaterialTheme.colorScheme.surface),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -426,10 +427,13 @@ internal fun ScheduleDayHeader(
             }
         }
         Text(
-            badge?.label.orEmpty(),
+            // A blank placeholder keeps the badge line's height on ordinary days, so the week grid
+            // does not shift when paging between weeks that do and do not carry a marker.
+            badge?.label ?: " ",
             style = MaterialTheme.typography.labelSmall,
             color = badge?.tint ?: Color.Transparent,
             maxLines = 1,
+            softWrap = false,
         )
     }
 }
